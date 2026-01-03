@@ -12,6 +12,10 @@ import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import Customer from "./pages/Customer/Customer";
+import AddCustomer from "./pages/Customer/AddCustomer";
+import Inventory from "./pages/Inventory/Inventory";
+import AddInventory from "./pages/Inventory/AddInventory";
 
 export default function App() {
   return (
@@ -22,6 +26,13 @@ export default function App() {
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
             <Route index path="/" element={<Home />} />
+            <Route index path="/customer" element={<Customer />} />
+            <Route path="/customer/add" element={<AddCustomer />} />
+            <Route path="/customer/edit/:id" element={<AddCustomer />} />
+
+             <Route index path="/inventory" element={<Inventory />} />
+            <Route path="/inventory/add" element={<AddInventory />} />
+            <Route path="/inventory/edit/:id" element={<AddInventory />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
