@@ -1,7 +1,8 @@
 // @ts-nocheck
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -54,18 +55,75 @@ console.log("ressss",res);
     }
   };
 
+  const fileInputRef = useRef(null);
+
+  const handleExcelClick = () => {
+  fileInputRef.current.click();
+};
+
+  const handleExcelUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("file", file); // backend me same key hona chahiye
+
+  try {
+    const res = await axios.post(
+      "http://localhost:3688/api/v1/inventory/upload-excel",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+console.log("resss",res);
+
+    if (res.data) {
+      toast.success("Excel uploaded successfully ✅");
+    getCustomers();
+
+      // optional: inventory list reload
+    } else {
+      toast.error("Excel upload failed ❌");
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error("Something went wrong ❌");
+  }
+};
+
   return (
     <div className="p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Inventory List</h2>
-        <button
-          onClick={() => navigate("/inventory/add")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          + Add Inventory
-        </button>
-      </div>
+    <div className="flex justify-between items-center mb-4">
+  <h2 className="text-xl font-semibold">Inventory List</h2>
+
+  {/* Right side buttons */}
+  <div className="flex gap-2">
+    <button
+      onClick={handleExcelClick}
+      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+    >
+      Excel Upload
+    </button>
+<input
+  type="file"
+  ref={fileInputRef}
+  className="hidden"
+  accept=".xlsx,.xls"
+  onChange={handleExcelUpload}
+/>
+    <button
+      onClick={() => navigate("/inventory/add")}
+      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+    >
+      + Add Inventory
+    </button>
+  </div>
+</div>
+
 
       {/* Table */}
       <div className="overflow-x-auto">
