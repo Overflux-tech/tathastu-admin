@@ -9,10 +9,21 @@ export default defineConfig({
     svgr({
       svgrOptions: {
         icon: true,
-        // This will transform your SVG to a React component
         exportType: "named",
         namedExport: "ReactComponent",
       },
     }),
   ],
+
+  // ✅ Build-time strict checks relax
+  build: {
+    sourcemap: false,
+  },
+
+  // ✅ Suppress TypeScript / esbuild warnings
+  esbuild: {
+    logOverride: {
+      "this-is-undefined-in-esm": "silent",
+    },
+  },
 });

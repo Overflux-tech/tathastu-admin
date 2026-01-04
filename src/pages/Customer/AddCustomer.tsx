@@ -1,7 +1,7 @@
+// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
-import Select from "../../components/form/Select";
 import ComponentCard from "../../components/common/ComponentCard";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router";

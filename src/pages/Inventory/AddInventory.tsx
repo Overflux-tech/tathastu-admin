@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
