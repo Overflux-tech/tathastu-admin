@@ -14,7 +14,7 @@ const Customer = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        "https://8560e6af88c8.ngrok-free.app/api/v1/customer/getall"
+        "http://localhost:3688/api/v1/customer/getall"
       );
 
       if (res.data?.success) {
@@ -41,7 +41,7 @@ const Customer = () => {
 
     try {
       const res = await axios.delete(
-        `https://8560e6af88c8.ngrok-free.app/api/v1/customer/delete/${id}`
+        `http://localhost:3688/api/v1/customer/delete/${id}`
       );
 console.log("ressss",res);
 

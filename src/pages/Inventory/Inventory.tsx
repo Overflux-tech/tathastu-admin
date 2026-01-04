@@ -14,7 +14,7 @@ const Inventory = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        "https://8560e6af88c8.ngrok-free.app/api/v1/inventory/getall"
+        "http://localhost:3688/api/v1/inventory/getall"
       );
 
       if (res.data?.success) {
@@ -41,7 +41,7 @@ const Inventory = () => {
 
     try {
       const res = await axios.delete(
-        `https://8560e6af88c8.ngrok-free.app/api/v1/inventory/delete/${id}`
+        `http://localhost:3688/api/v1/inventory/delete/${id}`
       );
 console.log("ressss",res);
 
@@ -70,7 +70,7 @@ console.log("ressss",res);
 
   try {
     const res = await axios.post(
-      "https://8560e6af88c8.ngrok-free.app/api/v1/inventory/upload-excel",
+      "http://localhost:3688/api/v1/inventory/upload-excel",
       formData,
       {
         headers: {

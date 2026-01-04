@@ -177,7 +177,7 @@ useEffect(() => {
 const getCustomerById = async () => {
     try {
         const res = await axios.get(
-            `https://8560e6af88c8.ngrok-free.app/api/v1/customer/getById/${id}`
+            `http://localhost:3688/api/v1/customer/getById/${id}`
         );
 console.log("res",res.data);
 
@@ -258,8 +258,8 @@ console.log("res",res.data);
 
     try {
         const url = id
-            ? `https://8560e6af88c8.ngrok-free.app/api/v1/customer/update/${id}`
-            : `https://8560e6af88c8.ngrok-free.app/api/v1/customer/create`;
+            ? `http://localhost:3688/api/v1/customer/update/${id}`
+            : `http://localhost:3688/api/v1/customer/create`;
 
         const method = id ? "put" : "post";
 
