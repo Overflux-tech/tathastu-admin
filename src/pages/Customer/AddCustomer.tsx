@@ -5,6 +5,7 @@ import Select from "../../components/form/Select";
 import ComponentCard from "../../components/common/ComponentCard";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router";
+import { toast } from "react-toastify";
 
 const AddCustomer = () => {
     const navigate = useNavigate();
@@ -265,11 +266,11 @@ console.log("res",res.data);
         const res = await axios[method](url, formData);
 
         if (res.data?.success) {
-            alert(
-                id
-                    ? "Customer updated successfully ✅"
-                    : "Customer added successfully ✅"
-            );
+            toast.success(
+                    id
+                      ? "Customer updated successfully"
+                      : "Customer added successfully"
+                  );
             navigate("/customer");
         }
     } catch (error) {

@@ -5,59 +5,61 @@ import Select from "../../components/form/Select";
 import ComponentCard from "../../components/common/ComponentCard";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router";
+import { toast } from "react-toastify";
 
 const AddInventory = () => {
     const navigate = useNavigate();
-const { id } = useParams();
+    const { id } = useParams();
 
     const [formData, setFormData] = useState({
         name: "",
         unit: "",
-        hsn: ""
+        hsn: "",
+        purchase: ""
     });
     const [errors, setErrors] = useState({});
 
-const handleChange = (e: any) => {
-    const { name, value } = e.target;
+    const handleChange = (e: any) => {
+        const { name, value } = e.target;
 
-    setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-    }));
+        setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+        }));
 
-    setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-    }));
-};
+        setErrors((prev) => ({
+            ...prev,
+            [name]: "",
+        }));
+    };
 
-useEffect(() => {
-    if (id) {
-        getCustomerById();
-    }
-}, [id]);
-
-const getCustomerById = async () => {
-    try {
-        const res = await axios.get(
-            `http://localhost:3688/api/v1/inventory/getById/${id}`
-        );
-console.log("res",res.data);
-
-        if (res.data) {
-            const customer = res.data;
-
-            setFormData({
-                name: customer.name || "",
-                mobile: customer.mobile || "",
-                email: customer.email || "",
-            });
+    useEffect(() => {
+        if (id) {
+            getCustomerById();
         }
-    } catch (error) {
-        console.error(error);
-        alert("Failed to load customer ❌");
-    }
-};
+    }, [id]);
+
+    const getCustomerById = async () => {
+        try {
+            const res = await axios.get(
+                `http://localhost:3688/api/v1/inventory/getById/${id}`
+            );
+
+            if (res.data) {
+                const customer = res.data.data;
+
+                setFormData({
+                    name: customer.name || "",
+                    unit: customer.unit || "",
+                    hsn: customer.hsn || "",
+                    purchase: customer.purchase || "",
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Failed to load customer ❌");
+        }
+    };
 
     const validateForm = () => {
         let newErrors = {};
@@ -66,41 +68,53 @@ console.log("res",res.data);
         if (!formData.name.trim()) {
             newErrors.name = "Customer name is required";
         }
+        // Name
+        if (!formData.unit.trim()) {
+            newErrors.unit = "Customer unit is required";
+        }
+        // Name
+        if (!formData.hsn.trim()) {
+            newErrors.hsn = "Customer hsn is required";
+        }
+        // Name
+        if (!formData.purchase.trim()) {
+            newErrors.purchase = "Customer purchase is required";
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+    const handleSubmit = async () => {
+        if (!validateForm()) return;
 
-    try {
-        const url = id
-            ? `http://localhost:3688/api/v1/inventory/update/${id}`
-            : `http://localhost:3688/api/v1/inventory/create`;
+        try {
+            const url = id
+                ? `http://localhost:3688/api/v1/inventory/update/${id}`
+                : `http://localhost:3688/api/v1/inventory/create`;
 
-        const method = id ? "put" : "post";
+            const method = id ? "put" : "post";
 
-        const res = await axios[method](url, formData);
+            const res = await axios[method](url, formData);
 
-        if (res.data?.success) {
-            alert(
-                id
-                    ? "Customer updated successfully ✅"
-                    : "Customer added successfully ✅"
-            );
-            navigate("/inventory");
+            if (res.data?.success) {
+                toast.success(
+                    id
+                        ? "Customer updated successfully"
+                        : "Customer added successfully"
+                );
+                navigate("/inventory");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Something went wrong ❌");
         }
-    } catch (error) {
-        console.error(error);
-        alert("Something went wrong ❌");
-    }
-};
+    };
 
     return (
-        <ComponentCard title="Add Customer">
+        <ComponentCard title="Add Inventory">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {/* Customer Name */}
+                {/* Inventory Name */}
                 <div>
                     <Label>Name</Label>
                     <Input
@@ -115,35 +129,49 @@ console.log("res",res.data);
                     )}
                 </div>
 
-                {/* Mobile */}
+                {/* unit */}
                 <div>
                     <Label>Unit</Label>
                     <Input
                         type="text"
-                        name="mobile"
-                        value={formData.mobile}
+                        name="unit"
+                        value={formData.unit}
                         onChange={handleChange}
                         maxLength={10}
                         inputMode="numeric"
-                        placeholder="Enter 10-digit mobile number"
+                        placeholder="Enter unit"
                     />
-                    {errors.mobile && (
-                        <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                    {errors.unit && (
+                        <p className="text-red-500 text-sm mt-1">{errors.unit}</p>
                     )}
                 </div>
 
-                {/* Email */}
+                {/* HSN */}
                 <div>
                     <Label>HSN</Label>
                     <Input
-                        type="email"
-                        name="email"
-                        value={formData.email}
+                        type="text"
+                        name="hsn"
+                        value={formData.hsn}
                         onChange={handleChange}
-                        placeholder="Enter email address"
+                        placeholder="Enter Hsn"
                     />
-                    {errors.email && (
-                        <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                    {errors.hsn && (
+                        <p className="text-red-500 text-sm mt-1">{errors.hsn}</p>
+                    )}
+                </div>
+                {/* purchase */}
+                <div>
+                    <Label>Purchase</Label>
+                    <Input
+                        type="text"
+                        name="purchase"
+                        value={formData.purchase}
+                        onChange={handleChange}
+                        placeholder="Enter purchase"
+                    />
+                    {errors.purchase && (
+                        <p className="text-red-500 text-sm mt-1">{errors.purchase}</p>
                     )}
                 </div>
             </div>
@@ -151,16 +179,16 @@ console.log("res",res.data);
             {/* Buttons */}
             <div className="flex justify-end gap-3 mt-8 border-t pt-5">
                 <button className="px-5 py-2 border rounded hover:bg-gray-100"
-                 onClick={() => navigate("/inventory")}
+                    onClick={() => navigate("/inventory")}
                 >
                     Cancel
                 </button>
-               <button
-    className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-    onClick={handleSubmit}
->
-    {id ? "Update Customer" : "Save Customer"}
-</button>
+                <button
+                    className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    onClick={handleSubmit}
+                >
+                    {id ? "Update Customer" : "Save Customer"}
+                </button>
 
             </div>
         </ComponentCard>

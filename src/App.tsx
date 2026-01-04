@@ -16,12 +16,24 @@ import Customer from "./pages/Customer/Customer";
 import AddCustomer from "./pages/Customer/AddCustomer";
 import Inventory from "./pages/Inventory/Inventory";
 import AddInventory from "./pages/Inventory/AddInventory";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function App() {
   return (
     <>
       <Router>
         <ScrollToTop />
+         <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          style={{ marginTop: "60px" }}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
         <Routes>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
@@ -30,9 +42,13 @@ export default function App() {
             <Route path="/customer/add" element={<AddCustomer />} />
             <Route path="/customer/edit/:id" element={<AddCustomer />} />
 
-             <Route index path="/inventory" element={<Inventory />} />
+            <Route index path="/inventory" element={<Inventory />} />
             <Route path="/inventory/add" element={<AddInventory />} />
             <Route path="/inventory/edit/:id" element={<AddInventory />} />
+
+            <Route index path="/estimate" element={<Inventory />} />
+            <Route path="/estimate/add" element={<AddInventory />} />
+            <Route path="/estimate/edit/:id" element={<AddInventory />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

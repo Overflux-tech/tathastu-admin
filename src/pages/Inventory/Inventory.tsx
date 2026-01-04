@@ -12,7 +12,7 @@ const Inventory = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        "http://localhost:3688/api/v1/customer/getall"
+        "http://localhost:3688/api/v1/inventory/getall"
       );
 
       if (res.data?.success) {
@@ -30,16 +30,16 @@ const Inventory = () => {
     getCustomers();
   }, []);
 
-  // 🔹 Delete customer
+  // 🔹 Delete inventory
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
-      "Are you sure you want to delete this customer?"
+      "Are you sure you want to delete this inventory?"
     );
     if (!confirmDelete) return;
 
     try {
       const res = await axios.delete(
-        `http://localhost:3688/api/v1/customer/delete/${id}`
+        `http://localhost:3688/api/v1/inventory/delete/${id}`
       );
 console.log("ressss",res);
 
@@ -73,9 +73,8 @@ console.log("ressss",res);
             <tr>
               <th className="border p-2">#</th>
               <th className="border p-2">Name</th>
-              <th className="border p-2">Email</th>
-              <th className="border p-2">Mobile</th>
-              <th className="border p-2">City</th>
+              <th className="border p-2">Hsn</th>
+              <th className="border p-2">Unit</th>
               <th className="border p-2">Action</th>
             </tr>
           </thead>
@@ -100,15 +99,14 @@ console.log("ressss",res);
                     {index + 1}
                   </td>
                   <td className="border p-2">{item.name}</td>
-                  <td className="border p-2">{item.email || "-"}</td>
-                  <td className="border p-2">{item.mobile}</td>
-                  <td className="border p-2">{item.city}</td>
+                  <td className="border p-2">{item.hsn || "-"}</td>
+                  <td className="border p-2">{item.unit}</td>
 
                   {/* Actions */}
                   <td className="border p-2 text-center space-x-2">
                     <button
                       onClick={() =>
-                        navigate(`/customer/edit/${item.id}`)
+                        navigate(`/inventory/edit/${item.id}`)
                       }
                       className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                     >
