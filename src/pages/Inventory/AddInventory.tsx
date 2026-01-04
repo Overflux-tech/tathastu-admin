@@ -43,7 +43,7 @@ const AddInventory = () => {
     const getCustomerById = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:3688/api/v1/inventory/getById/${id}`
+                `https://8560e6af88c8.ngrok-free.app/api/v1/inventory/getById/${id}`
             );
 
             if (res.data) {
@@ -90,8 +90,8 @@ const AddInventory = () => {
 
         try {
             const url = id
-                ? `http://localhost:3688/api/v1/inventory/update/${id}`
-                : `http://localhost:3688/api/v1/inventory/create`;
+                ? `https://8560e6af88c8.ngrok-free.app/api/v1/inventory/update/${id}`
+                : `https://8560e6af88c8.ngrok-free.app/api/v1/inventory/create`;
 
             const method = id ? "put" : "post";
 
