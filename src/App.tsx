@@ -18,6 +18,12 @@ import Inventory from "./pages/Inventory/Inventory";
 import AddInventory from "./pages/Inventory/AddInventory";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Estimate from "./pages/Estimate/Estimate";
+import AddEstimate from "./pages/Estimate/AddEstimate";
+import Invoice from "./pages/Invoice/Invoice";
+import AddInvoice from "./pages/Invoice/AddInvoice";
+import EstimateView from "./pages/Estimate/EstimateView";
+import EstimateDownload from "./pages/Estimate/EstimateDownload";
 
 export default function App() {
   return (
@@ -46,9 +52,14 @@ export default function App() {
             <Route path="/inventory/add" element={<AddInventory />} />
             <Route path="/inventory/edit/:id" element={<AddInventory />} />
 
-            <Route index path="/estimate" element={<Inventory />} />
-            <Route path="/estimate/add" element={<AddInventory />} />
-            <Route path="/estimate/edit/:id" element={<AddInventory />} />
+            <Route index path="/estimate" element={<Estimate />} />
+            <Route path="/estimate/add" element={<AddEstimate />} />
+            <Route path="/estimate/edit/:id" element={<AddEstimate />} />
+            <Route path="/estimate/view/:id" element={<EstimateView />} />
+            <Route path="/estimate/download/:id" element={<EstimateDownload />} />
+
+            <Route index path="/invoice" element={<Invoice />} />
+            <Route path="/invoice/add" element={<AddInvoice />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

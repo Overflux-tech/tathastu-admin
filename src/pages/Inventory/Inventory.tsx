@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import endPointApi from "../../utils/endPointApi";
+import { api } from "../../utils/axiosInstance";
 
 const Inventory = () => {
   const navigate = useNavigate();
@@ -13,9 +15,8 @@ const Inventory = () => {
   const getCustomers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        "http://localhost:3688/api/v1/inventory/getall"
-      );
+
+      const res = await api.get(`${endPointApi.getAllInventory}`);
 
       if (res.data?.success) {
         setCustomers(res.data.data || []);
@@ -40,90 +41,85 @@ const Inventory = () => {
     if (!confirmDelete) return;
 
     try {
-      const res = await axios.delete(
-        `http://localhost:3688/api/v1/inventory/delete/${id}`
-      );
-console.log("ressss",res);
+      const res = await api.delete(`${endPointApi.deleteInventory}/${id}`);
 
       if (res.data) {
-        alert("Customer deleted successfully ✅");
+        toast.success(res.data.message);
         getCustomers(); // refresh list
       }
     } catch (error) {
-      console.error(error);
-      alert("Delete failed ❌");
+      toast.error(error);
     }
   };
 
   const fileInputRef = useRef(null);
 
   const handleExcelClick = () => {
-  fileInputRef.current.click();
-};
+    fileInputRef.current.click();
+  };
 
   const handleExcelUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const formData = new FormData();
-  formData.append("file", file); // backend me same key hona chahiye
+    const formData = new FormData();
+    formData.append("file", file); // backend me same key hona chahiye
 
-  try {
-    const res = await axios.post(
-      "http://localhost:3688/api/v1/inventory/upload-excel",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    try {
+      const res = await axios.post(
+        "http://localhost:3688/api/v1/inventory/upload-excel",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log("resss", res);
+
+      if (res.data) {
+        toast.success("Excel uploaded successfully ✅");
+        getCustomers();
+
+        // optional: inventory list reload
+      } else {
+        toast.error("Excel upload failed ❌");
       }
-    );
-console.log("resss",res);
-
-    if (res.data) {
-      toast.success("Excel uploaded successfully ✅");
-    getCustomers();
-
-      // optional: inventory list reload
-    } else {
-      toast.error("Excel upload failed ❌");
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong ❌");
     }
-  } catch (error) {
-    console.error(error);
-    toast.error("Something went wrong ❌");
-  }
-};
+  };
 
   return (
     <div className="p-4">
       {/* Header */}
-    <div className="flex justify-between items-center mb-4">
-  <h2 className="text-xl font-semibold">Inventory List</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Inventory List</h2>
 
-  {/* Right side buttons */}
-  <div className="flex gap-2">
-    <button
-      onClick={handleExcelClick}
-      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-    >
-      Excel Upload
-    </button>
-<input
-  type="file"
-  ref={fileInputRef}
-  className="hidden"
-  accept=".xlsx,.xls"
-  onChange={handleExcelUpload}
-/>
-    <button
-      onClick={() => navigate("/inventory/add")}
-      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-    >
-      + Add Inventory
-    </button>
-  </div>
-</div>
-
+        {/* Right side buttons */}
+        <div className="flex gap-2">
+          <button
+            onClick={handleExcelClick}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Excel Upload
+          </button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".xlsx,.xls"
+            onChange={handleExcelUpload}
+          />
+          <button
+            onClick={() => navigate("/inventory/add")}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            + Add Inventory
+          </button>
+        </div>
+      </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
@@ -154,9 +150,7 @@ console.log("resss",res);
             ) : (
               customers.map((item, index) => (
                 <tr key={item._id}>
-                  <td className="border p-2 text-center">
-                    {index + 1}
-                  </td>
+                  <td className="border p-2 text-center">{index + 1}</td>
                   <td className="border p-2">{item.name}</td>
                   <td className="border p-2">{item.hsn || "-"}</td>
                   <td className="border p-2">{item.unit}</td>
@@ -164,9 +158,7 @@ console.log("resss",res);
                   {/* Actions */}
                   <td className="border p-2 text-center space-x-2">
                     <button
-                      onClick={() =>
-                        navigate(`/inventory/edit/${item.id}`)
-                      }
+                      onClick={() => navigate(`/inventory/edit/${item.id}`)}
                       className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                     >
                       Edit

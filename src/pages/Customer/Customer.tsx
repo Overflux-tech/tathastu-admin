@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "../../utils/axiosInstance";
+import endPointApi from "../../utils/endPointApi";
 
 const Customer = () => {
   const navigate = useNavigate();
@@ -13,9 +14,7 @@ const Customer = () => {
   const getCustomers = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        "http://localhost:3688/api/v1/customer/getall"
-      );
+      const res = await api.get(`${endPointApi.getAllCustomer}`);
 
       if (res.data?.success) {
         setCustomers(res.data.data || []);
@@ -40,18 +39,14 @@ const Customer = () => {
     if (!confirmDelete) return;
 
     try {
-      const res = await axios.delete(
-        `http://localhost:3688/api/v1/customer/delete/${id}`
-      );
-console.log("ressss",res);
+      const res = await api.delete(`${endPointApi.deleteCustomer}/${id}`);
 
       if (res.data) {
-        alert("Customer deleted successfully ✅");
+        toast.success(res.data.message);
         getCustomers(); // refresh list
       }
     } catch (error) {
-      console.error(error);
-      alert("Delete failed ❌");
+      toast.error(error);
     }
   };
 
@@ -73,7 +68,7 @@ console.log("ressss",res);
         <table className="w-full border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-2">#</th>
+              <th className="border p-2">Sr.</th>
               <th className="border p-2">Name</th>
               <th className="border p-2">Email</th>
               <th className="border p-2">Mobile</th>
@@ -98,9 +93,7 @@ console.log("ressss",res);
             ) : (
               customers.map((item, index) => (
                 <tr key={item._id}>
-                  <td className="border p-2 text-center">
-                    {index + 1}
-                  </td>
+                  <td className="border p-2 text-center">{index + 1}</td>
                   <td className="border p-2">{item.name}</td>
                   <td className="border p-2">{item.email || "-"}</td>
                   <td className="border p-2">{item.mobile}</td>
@@ -109,9 +102,7 @@ console.log("ressss",res);
                   {/* Actions */}
                   <td className="border p-2 text-center space-x-2">
                     <button
-                      onClick={() =>
-                        navigate(`/customer/edit/${item.id}`)
-                      }
+                      onClick={() => navigate(`/customer/edit/${item.id}`)}
                       className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
                     >
                       Edit
