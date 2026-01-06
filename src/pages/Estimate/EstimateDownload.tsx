@@ -1,7 +1,15 @@
-import React from "react";
+import { useEffect, useRef } from "react";
+import html2pdf from "html2pdf.js";
 
-export default function EstimateDownload() {
-  // Sample items array - aap yahan multiple items add kar sakte ho
+export default function EstimateDownload({
+  estimateId,
+  onDone,
+}: {
+  estimateId: string;
+  onDone: () => void;
+}
+) {
+  const hasDownloaded = useRef(false); 
   const items = [
     {
       sr: 1,
@@ -25,35 +33,44 @@ export default function EstimateDownload() {
     },
   ];
 
-  const handleDownloadPDF = async () => {
-    // Create a clean version for PDF
-    const printContent = document.getElementById("invoice-content");
-    const originalBody = document.body.innerHTML;
+const handleDownloadPDF = () => {
+  const element: any = document.getElementById("invoice-content");
 
-    // Temporarily replace body with just invoice content
-    document.body.innerHTML = printContent.outerHTML;
-
-    // Trigger print
-    window.print();
-
-    // Restore original content
-    setTimeout(() => {
-      document.body.innerHTML = originalBody;
-      window.location.reload();
-    }, 100);
+  const options: any = {
+    margin: 10,
+    filename: `Estimate-${estimateId}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait",
+    },
   };
 
+  html2pdf().set(options).from(element).save().then(() => onDone());
+};
+
+  useEffect(() => {
+    if (hasDownloaded.current) return; // ✅ PREVENT DOUBLE CALL
+    hasDownloaded.current = true;
+
+    setTimeout(handleDownloadPDF, 300);
+  }, []);
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
+  <div className="min-h-screen bg-gray-100 p-4">
       {/* Download Button */}
-      <div className="max-w-4xl mx-auto mb-4">
+      {/* <div className="max-w-4xl mx-auto mb-4">
         <button
           onClick={handleDownloadPDF}
           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 print:hidden"
         >
           Download PDF
         </button>
-      </div>
+      </div> */}
 
       {/* Invoice Container */}
       <div
@@ -61,36 +78,33 @@ export default function EstimateDownload() {
         className="max-w-4xl mx-auto bg-white p-8 shadow-lg print:shadow-none"
       >
         {/* Header Section */}
-        <div className="mb-6">
-          <div className="grid grid-cols-2 mb-4">
+        <div className="">
+          <div className="grid grid-cols-2">
             {/* Company Details */}
             <div>
-              <h1 className="text-xl font-bold mb-2">TATHASTU ENERGY</h1>
+              <h1 className="text-xl font-bold mb-2">TEST ENERGY</h1>
               <p className="text-sm leading-relaxed">
-                FLOOR, PLOT NO. 40, Ar Mall
+                30 Pitt Street, Sydney Harbour Marriot
                 <br />
-                Mota Varachha,
+                Canberra,
                 <br />
-                SURAT, Gujarat
+                SURAT, Gujarat - 394210
                 <br />
-                India - 394210
               </p>
-              <p className="text-sm mt-2">Phone: 7069929196</p>
-              <p className="text-sm font-semibold mt-2">
-                GSTN: 24DAFPG4786M1Z9
+              <p className="text-sm mt-1">Phone: 7069929000</p>
+              <p className="text-sm font-semibold mt-1">
+                GSTN: 24DAFPG4786M8Z9
               </p>
             </div>
 
-            {/* Logo */}
+            {/* Invoice Type */}
             <div className="flex items-center justify-end">
-              <div className="flex items-center justify-end">
-                <img src="/logo.jpg" alt="Logo" className="h-50 w-50" />
-              </div>
+              <img src="/logo.jpg" alt="Logo" className="h-50 w-50" />
             </div>
           </div>
 
           {/* Horizontal Line after first part */}
-          <div className="border-t border-black my-6"></div>
+          <div className="border-t-1 border-black mb-4"></div>
 
           {/* Estimate Details and Buyer Details */}
           <div className="grid grid-cols-2 gap-8 mb-6">
@@ -122,8 +136,6 @@ export default function EstimateDownload() {
                 <br />
                 Umarga Main Road, Surat
                 <br />
-                Johan
-                <br />
                 +91 98745 98765
               </p>
               <p className="text-sm font-semibold mt-2">
@@ -133,14 +145,14 @@ export default function EstimateDownload() {
           </div>
 
           {/* Horizontal Line after second part */}
-          <div className="border-t border-black"></div>
+          <div className="border-t-1 border-black"></div>
         </div>
 
         {/* Items Table */}
         <div className="mb-1">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-black">
+              <tr className="border-b-1 border-black">
                 <th className="text-left p-2 text-sm font-bold">Sr.</th>
                 <th className="text-left p-2 text-sm font-bold">
                   Items & Description
@@ -170,7 +182,7 @@ export default function EstimateDownload() {
               ))}
               {/* Empty rows for spacing */}
               <tr style={{ height: "40px" }}>
-                <td colSpan="8"></td>
+                <td colSpan={8}></td>
               </tr>
             </tbody>
           </table>
@@ -179,9 +191,9 @@ export default function EstimateDownload() {
         {/* Total Section */}
         <div className="grid grid-cols-2 gap-8 mb-4">
           {/* Bank Details */}
-          <div>
+          <div className="mt-16">
             <h3 className="font-bold mb-2">Bank Details</h3>
-            <p className="text-sm">Name: TATHASTU ENERGY</p>
+            <p className="text-sm">Name: TEST ENERGY</p>
             <p className="text-sm">Account No: 258741259685</p>
             <p className="text-sm">Bank: HDFC BANK</p>
             <p className="text-sm">ISFC: HDFC1003888</p>
@@ -211,7 +223,7 @@ export default function EstimateDownload() {
 
         {/* Signature */}
         <div className="text-right mt-12">
-          <p className="font-bold">For, TATHASTU ENERGY</p>
+          <p className="font-bold">For, TEST ENERGY</p>
           <div className="mt-16"></div>
         </div>
       </div>

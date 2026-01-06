@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
+import { MoveLeft } from 'lucide-react';
 
 export default function EstimateView() {
   const navigate = useNavigate();
@@ -24,8 +25,8 @@ export default function EstimateView() {
     ],
   });
 
-  console.log("formData",formData);
-  
+  console.log("formData", formData);
+
   useEffect(() => {
     if (!id) return;
 
@@ -41,22 +42,22 @@ export default function EstimateView() {
           date: data.date ? data.date.split("T")[0] : "",
           state: data.state || "",
           items: data.items?.length
-            ? data.items.map((item) => ({
-                item: item.item || "",
-                description: item.description || "",
-                qty: item.qty || 0,
-                rate: item.rate || 0,
-                taxRate: item.taxRate || 0,
-              }))
+            ? data.items.map((item: any) => ({
+              item: item.item || "",
+              description: item.description || "",
+              qty: item.qty || 0,
+              rate: item.rate || 0,
+              taxRate: item.taxRate || 0,
+            }))
             : [
-                {
-                  item: "",
-                  description: "",
-                  qty: 0,
-                  rate: 0,
-                  taxRate: 0,
-                },
-              ],
+              {
+                item: "",
+                description: "",
+                qty: 0,
+                rate: 0,
+                taxRate: 0,
+              },
+            ],
         });
       } catch (error) {
         toast.error("Failed to load estimate");
@@ -93,24 +94,32 @@ export default function EstimateView() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-8">
+    <div id="estimate-pdf" className="max-w-4xl mx-auto bg-white p-8">
+      <div className="mb-4">
+        <button
+          onClick={() => navigate("/estimate")} // goes back to previous page
+          className="flex items-center text-blue-600 hover:text-blue-800 font-semibold"
+        >
+          <span className="mr-2"><MoveLeft /></span> Back to Estimates
+        </button>
+      </div>
+
       {/* Header Section */}
-      <div className="mb-6">
-        <div className="grid grid-cols-2 mb-4">
+      <div className="">
+        <div className="grid grid-cols-2">
           {/* Company Details */}
           <div>
-            <h1 className="text-xl font-bold mb-2">TATHASTU ENERGY</h1>
+            <h1 className="text-xl font-bold mb-2">TEST ENERGY</h1>
             <p className="text-sm leading-relaxed">
-              FLOOR, PLOT NO. 40, Ar Mall
+              30 Pitt Street, Sydney Harbour Marriot
               <br />
-              Mota Varachha,
+              Canberra,
               <br />
-              SURAT, Gujarat
+              SURAT, Gujarat - 394210
               <br />
-              India - 394210
             </p>
-            <p className="text-sm mt-2">Phone: 7069929196</p>
-            <p className="text-sm font-semibold mt-2">GSTN: 24DAFPG4786M1Z9</p>
+            <p className="text-sm mt-1">Phone: 7069929000</p>
+            <p className="text-sm font-semibold mt-1">GSTN: 24DAFPG4786M8Z9</p>
           </div>
 
           {/* Invoice Type */}
@@ -120,7 +129,7 @@ export default function EstimateView() {
         </div>
 
         {/* Horizontal Line after first part */}
-        <div className="border-t-1 border-black my-6"></div>
+        <div className="border-t-1 border-black mb-4"></div>
 
         {/* Estimate Details and Buyer Details */}
         <div className="grid grid-cols-2 gap-8 mb-6">
@@ -151,8 +160,6 @@ export default function EstimateView() {
               H.NO 178/261, MADNANAND COLONY,
               <br />
               Umarga Main Road, Surat
-              <br />
-              Johan
               <br />
               +91 98745 98765
             </p>
@@ -198,7 +205,7 @@ export default function EstimateView() {
             ))}
             {/* Empty rows for spacing */}
             <tr style={{ height: "40px" }}>
-              <td colSpan="8"></td>
+              <td colSpan={8}></td>
             </tr>
           </tbody>
         </table>
@@ -207,9 +214,9 @@ export default function EstimateView() {
       {/* Total Section */}
       <div className="grid grid-cols-2 gap-8 mb-4">
         {/* Bank Details */}
-        <div>
+        <div className="mt-16">
           <h3 className="font-bold mb-2">Bank Details</h3>
-          <p className="text-sm">Name: TATHASTU ENERGY</p>
+          <p className="text-sm">Name: TEST ENERGY</p>
           <p className="text-sm">Account No: 258741259685</p>
           <p className="text-sm">Bank: HDFC BANK</p>
           <p className="text-sm">ISFC: HDFC1003888</p>
@@ -239,7 +246,7 @@ export default function EstimateView() {
 
       {/* Signature */}
       <div className="text-right mt-12">
-        <p className="font-bold">For, TATHASTU ENERGY</p>
+        <p className="font-bold">For, TEST ENERGY</p>
         <div className="mt-16"></div>
       </div>
     </div>

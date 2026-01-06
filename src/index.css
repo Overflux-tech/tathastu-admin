@@ -790,3 +790,10 @@ span.flatpickr-weekday,
 .simplebar-scrollbar.simplebar-visible:before {
   @apply opacity-100;
 }
+
+.primary-color {
+  background: #292a6a;
+}
+.primary-color-text {
+  color: #292a6a;
+}

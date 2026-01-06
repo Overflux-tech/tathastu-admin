@@ -115,11 +115,12 @@ const AddEstimate = () => {
     setFormData((prev) => ({ ...prev, items: updatedItems }));
   };
 
+  console.log('customers', customers)
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:3688/api/v1/estimate/getall"
+          "http://localhost:3688/api/v1/customer/getall"
         );
         setCustomers(res.data.data || []);
       } catch (err) {
@@ -228,8 +229,8 @@ const AddEstimate = () => {
           >
             <option value="">Select Customer</option>
             {customers.map((cust) => (
-              <option key={cust._id} value={cust.customerName}>
-                {cust.customerName}
+              <option key={cust._id} value={cust.name}>
+                {cust.name}
               </option>
             ))}
           </select>
@@ -341,7 +342,7 @@ const AddEstimate = () => {
           </div>
         ))}
 
-        <button onClick={addItem} className="text-blue-600">
+        <button onClick={addItem} className="primary-color-text">
           + Add Item
         </button>
       </div>
@@ -355,7 +356,7 @@ const AddEstimate = () => {
         </button>
         <button
           onClick={handleSubmit}
-          className="bg-blue-600 text-white px-5 py-2 rounded"
+          className="primary-color text-white px-5 py-2 rounded"
         >
           Save Estimate
         </button>

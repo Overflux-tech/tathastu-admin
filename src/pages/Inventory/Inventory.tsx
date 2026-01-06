@@ -114,7 +114,7 @@ const Inventory = () => {
           />
           <button
             onClick={() => navigate("/inventory/add")}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="primary-color text-white px-4 py-2 rounded"
           >
             + Add Inventory
           </button>

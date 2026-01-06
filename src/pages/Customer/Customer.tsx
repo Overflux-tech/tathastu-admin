@@ -57,7 +57,7 @@ const Customer = () => {
         <h2 className="text-xl font-semibold">Customer List</h2>
         <button
           onClick={() => navigate("/customer/add")}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="primary-color text-white px-4 py-2 rounded hover:primary-color"
         >
           + Add Customer
         </button>

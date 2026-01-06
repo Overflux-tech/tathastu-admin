@@ -49,19 +49,6 @@ const STAMP_SVG = `
 </svg>
 `;
 
-
-/* =========================
-   SVG → BASE64
-========================= */
-const svgToBase64 = (svg: string) =>
-  `data:image/svg+xml;base64,${btoa(svg)}`;
-
-/* =========================
-   NUMBER TO WORDS (Simple)
-========================= */
-const numberToWords = (num: number) =>
-  `${num.toFixed(2)} Rupees Only`;
-
 export const downloadInvoicePDF = async (
   invoiceData: any,
   invoiceNumber: string

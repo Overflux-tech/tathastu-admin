@@ -417,7 +417,7 @@ const AddCustomer = () => {
           Cancel
         </button>
         <button
-          className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          className="px-5 py-2 primary-color text-white rounded "
           onClick={handleSubmit}
         >
           {id ? "Update Customer" : "Save Customer"}

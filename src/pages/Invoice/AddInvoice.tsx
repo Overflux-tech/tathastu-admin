@@ -269,7 +269,7 @@ const AddInvoice = () => {
           </div>
         ))}
 
-        <button onClick={addItem} className="text-blue-600 mt-2">
+        <button onClick={addItem} className="primary-color-text mt-2">
           + Add Item
         </button>
       </div>
@@ -284,7 +284,7 @@ const AddInvoice = () => {
         </button>
         <button
           onClick={handleSubmit}
-          className="bg-blue-600 text-white px-5 py-2 rounded"
+          className="primary-color text-white px-5 py-2 rounded"
         >
           Save Invoice
         </button>

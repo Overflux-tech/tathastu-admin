@@ -4,7 +4,6 @@ import axios from 'axios'
 // const baseURL = 'https://christeen-unmaidenlike-bloomingly.ngrok-free.dev/api/v1/';
 // const baseURL = 'http://192.168.29.254:3699';
 // const baseURL = process.env.NEXT_PUBLIC_APP_URL;
-console.log(":import.meta.env.VITE_APP_URL",import.meta.env.VITE_APP_URL);
 
 const apiAdminInstance = axios.create({
   baseURL: import.meta.env.VITE_APP_URL,
@@ -12,7 +11,6 @@ const apiAdminInstance = axios.create({
   //   'Content-Type': 'multipart/form-data'
   // }
 })
-console.log("apiAdminInstance",apiAdminInstance);
 
 export const api = apiAdminInstance;
 
