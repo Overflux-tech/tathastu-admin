@@ -10,6 +10,7 @@ const Inventory = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
+console.log("test");
 
   // 🔹 Get all customers
   const getCustomers = async () => {
