@@ -99,7 +99,7 @@ const handleDownloadPDF = () => {
 
             {/* Invoice Type */}
             <div className="flex items-center justify-end">
-              <img src="/logo.jpg" alt="Logo" className="h-50 w-50" />
+              <img src="/logo.png" alt="Logo" className="h-50 w-50" />
             </div>
           </div>
 

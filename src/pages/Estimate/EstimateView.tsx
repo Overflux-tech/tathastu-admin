@@ -123,8 +123,8 @@ export default function EstimateView() {
           </div>
 
           {/* Invoice Type */}
-          <div className="flex items-center justify-end">
-            <img src="/logo.jpg" alt="Logo" className="h-50 w-50" />
+          <div className="flex justify-end">
+            <img src="/logo.png" alt="Logo" className="h-60 w-60" />
           </div>
         </div>
 
