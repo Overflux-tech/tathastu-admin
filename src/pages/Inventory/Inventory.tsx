@@ -5,15 +5,18 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
+import { Edit, Trash2 } from "lucide-react";
 
 const Inventory = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
-console.log("test");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // 🔹 Get all customers
-  const getCustomers = async () => {
+  // 🔹 Get all Inventory
+  const getInventory = async () => {
     try {
       setLoading(true);
 
@@ -31,25 +34,24 @@ console.log("test");
   };
 
   useEffect(() => {
-    getCustomers();
+    getInventory();
   }, []);
 
   // 🔹 Delete inventory
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this inventory?"
-    );
-    if (!confirmDelete) return;
+  const handleDelete = async (id: number | null) => {
+    if (!id) return;
 
     try {
       const res = await api.delete(`${endPointApi.deleteInventory}/${id}`);
 
       if (res.data) {
         toast.success(res.data.message);
-        getCustomers(); // refresh list
+        getInventory(); // refresh list
+        setShowDeleteModal(false);
+        setDeleteId(null);
       }
-    } catch (error) {
-      toast.error(error);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Delete failed");
     }
   };
 
@@ -79,16 +81,16 @@ console.log("test");
       console.log("resss", res);
 
       if (res.data) {
-        toast.success("Excel uploaded successfully ✅");
-        getCustomers();
+        toast.success("Excel uploaded successfully");
+        getInventory();
 
         // optional: inventory list reload
       } else {
-        toast.error("Excel upload failed ❌");
+        toast.error("Excel upload failed");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Something went wrong ❌");
+      toast.error("Something went wrong");
     }
   };
 
@@ -127,9 +129,10 @@ console.log("test");
         <table className="w-full border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-2">#</th>
+              <th className="border p-2">Sr.</th>
               <th className="border p-2">Name</th>
               <th className="border p-2">Hsn</th>
+              <th className="border p-2">Tax</th>
               <th className="border p-2">Unit</th>
               <th className="border p-2">Action</th>
             </tr>
@@ -154,21 +157,32 @@ console.log("test");
                   <td className="border p-2 text-center">{index + 1}</td>
                   <td className="border p-2">{item.name}</td>
                   <td className="border p-2">{item.hsn || "-"}</td>
+                  <td className="border p-2">
+                    {item.tax ? `${item.tax}%` : "-"}
+                  </td>
                   <td className="border p-2">{item.unit}</td>
 
                   {/* Actions */}
                   <td className="border p-2 text-center space-x-2">
+                    {/* Edit */}
                     <button
                       onClick={() => navigate(`/inventory/edit/${item.id}`)}
-                      className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                      title="Edit"
                     >
-                      Edit
+                      <Edit className="h-4 w-4" />
                     </button>
+
+                    {/* Delete */}
                     <button
-                      onClick={() => handleDelete(item.id)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      onClick={() => {
+                        setDeleteId(item.id);
+                        setShowDeleteModal(true);
+                      }}
+                      className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                      title="Delete"
                     >
-                      Delete
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
@@ -177,6 +191,11 @@ console.log("test");
           </tbody>
         </table>
       </div>
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => handleDelete(deleteId)}
+      />
     </div>
   );
 };

@@ -4,11 +4,16 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
+import { toast } from "react-toastify";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
+import { Edit, Trash2 } from "lucide-react";
 
 const Customer = () => {
   const navigate = useNavigate();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
+ const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // 🔹 Get all customers
   const getCustomers = async () => {
@@ -32,11 +37,8 @@ const Customer = () => {
   }, []);
 
   // 🔹 Delete customer
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this customer?"
-    );
-    if (!confirmDelete) return;
+  const handleDelete = async (id: number | null) => {
+    if (!id) return;
 
     try {
       const res = await api.delete(`${endPointApi.deleteCustomer}/${id}`);
@@ -44,6 +46,8 @@ const Customer = () => {
       if (res.data) {
         toast.success(res.data.message);
         getCustomers(); // refresh list
+         setShowDeleteModal(false);
+        setDeleteId(null);
       }
     } catch (error) {
       toast.error(error);
@@ -101,17 +105,25 @@ const Customer = () => {
 
                   {/* Actions */}
                   <td className="border p-2 text-center space-x-2">
+                    {/* Edit */}
                     <button
                       onClick={() => navigate(`/customer/edit/${item.id}`)}
-                      className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                      className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                      title="Edit"
                     >
-                      Edit
+                      <Edit className="h-4 w-4" />
                     </button>
+
+                    {/* Delete */}
                     <button
-                      onClick={() => handleDelete(item.id)}
-                      className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                      onClick={() => {
+                        setDeleteId(item.id);
+                        setShowDeleteModal(true);
+                      }}
+                      className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                      title="Delete"
                     >
-                      Delete
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
                 </tr>
@@ -120,6 +132,11 @@ const Customer = () => {
           </tbody>
         </table>
       </div>
+       <DeleteConfirmModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => handleDelete(deleteId)}
+      />
     </div>
   );
 };

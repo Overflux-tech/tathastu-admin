@@ -1,19 +1,24 @@
 // @ts-nocheck
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import ComponentCard from "../../components/common/ComponentCard";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
+import endPointApi from "../../utils/endPointApi";
+import { api } from "../../utils/axiosInstance";
+import { generateInvoiceNumber } from "../../utils/helper";
+import DatePicker from "../../components/form/date-picker";
 
 const AddInvoice = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const [formData, setFormData] = useState({
-    customerName: "",
+    customerId: "",
     invoiceNumber: "",
     orderNumber: "",
-    date: "",
+    date: null as Date | null,
     state: "",
     items: [
       {
@@ -27,6 +32,9 @@ const AddInvoice = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [customers, setCustomers] = useState([]);
+  const [inventoryData, setInventoryData] = useState([]);
+  const [estimateData, setEstimateData] = useState(null);
 
   /* -------------------- HANDLERS -------------------- */
 
@@ -61,6 +69,44 @@ const AddInvoice = () => {
     }));
   };
 
+  // Remove any other duplicate declaration
+
+  const handleOrderNumberEnter = async (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const orderNumber = formData.orderNumber.trim();
+    if (!orderNumber) return;
+
+     const res = await api.get(`${endPointApi.estimateByNumber}/${orderNumber}`);
+      const estimate = res.data.data;
+    if (!estimate) {
+      toast.error("No estimate found");
+
+      // Clear the order number field if no match
+      setFormData((prev) => ({
+        ...prev,
+        orderNumber: "",
+      }));
+      return;
+    } else {
+
+      setFormData((prev) => ({
+        ...prev,
+        customerId: estimate.customerId?.id || prev.customerId,
+        state: estimate.customerId?.state || prev.state,
+        date: estimate.date ? new Date(estimate.date) : prev.date,
+        items: estimate.items?.map((i) => ({
+          item: i.item?.id || "",
+          description: i.description || "",
+          qty: i.qty || 0,
+          rate: i.rate || 0,
+          taxRate: i.taxRate || 0,
+        })) || prev.items,
+      }));
+    }
+  };
+
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
@@ -83,8 +129,8 @@ const AddInvoice = () => {
   const validateForm = () => {
     let newErrors = {};
 
-    if (!formData.customerName.trim()) {
-      newErrors.customerName = "Customer name is required";
+    if (!formData.customerId) {
+      newErrors.customerId = "Customer is required";
     }
 
     if (!formData.invoiceNumber.trim()) {
@@ -120,22 +166,144 @@ const AddInvoice = () => {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    const payload = {
-      customerName: formData.customerName,
-      invoiceNumber: formData.invoiceNumber,
-      orderNumber: formData.orderNumber,
-      date: formData.date,
-      state: formData.state,
-      items: formData.items,
-    };
+    try {
+      const payload = {
+        customerId: formData.customerId,
+        invoiceNo: formData.invoiceNumber,
+        orderNo: formData.orderNumber,
+        date: formData.date,
+        state: formData.state,
+        items: formData.items.map((item) => {
+          const selectedItem = inventoryData.find((p) => p.id === item.item);
+          return {
+            description:
+              (selectedItem?.name || "") +
+              (item.description ? ` - ${item.description}` : ""),
+            item: item.item, // still just the ID
+            qty: Number(item.qty),
+            rate: Number(item.rate),
+            taxRate: Number(item.taxRate),
+          };
+        }),
+      };
 
-    console.log("Invoice Payload:", payload);
+      const method = id ? "put" : "post";
+      const url = id
+        ? `${endPointApi.updateInvoice}/${id}`
+        : `${endPointApi.createInvoice}`;
 
-    toast.success("Invoice saved successfully ✅");
-    navigate("/invoice");
+      const res = await api[method](url, payload);
+
+      if (res.data) {
+        toast.success(
+          id ? "Invoice updated successfully" : "Invoice added successfully"
+        );
+        navigate("/invoice");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Something went wrong");
+    }
+
   };
 
-  /* -------------------- JSX -------------------- */
+  useEffect(() => {
+    // Example: last saved estimate number
+    const fetchLastInvoiceNumber = async () => {
+      try {
+        const res = await api.get(`${endPointApi.getLastInvoiceNumber}`);
+        const lastNumber = res.data.lastInvoiceNumber || "INV-000";
+        const newNumber = generateInvoiceNumber(lastNumber);
+
+        setFormData((prev) => ({
+          ...prev,
+          invoiceNumber: newNumber,
+        }));
+      } catch (err) {
+        console.error("Failed to fetch last invoice number", err);
+      }
+    };
+    fetchLastInvoiceNumber();
+  }, []);
+
+  const getInventory = async () => {
+    try {
+      // setLoading(true);
+
+      const res = await api.get(`${endPointApi.getAllInventory}`);
+
+      if (res.data?.success) {
+        setInventoryData(res.data.data || []);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getInventory();
+  }, []);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const res = await api.get(`${endPointApi.getAllCustomer}`);
+
+        setCustomers(res.data.data || []);
+      } catch (err) {
+        toast.error("Failed to load customers");
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  //   getById
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchInvoice = async () => {
+      try {
+        const res = await api.get(`${endPointApi.getByIdInvoice}/${id}`);
+
+        const data = res.data.data;
+
+        setFormData({
+          customerId: data.customerId?.id || "",
+          invoiceNumber: data.invoiceNo || "",
+          orderNumber: data.orderNo || "",
+          date: data.date ? new Date(data.date) : null,
+          state: data.state || "",
+          items: data.items?.length
+            ? data.items.map((item) => ({
+              item: item.item?.id || "",
+              name: item.item?.name || "",
+              description: item.description || "",
+              qty: item.qty || 0,
+              rate: item.rate || 0,
+              taxRate: item.taxRate || 0,
+            }))
+            : [
+              {
+                name: "",
+                item: "",
+                description: "",
+                qty: 0,
+                rate: 0,
+                taxRate: 0,
+              },
+            ],
+        });
+      } catch (error) {
+        toast.error("Failed to load invoice ❌");
+        console.error(error);
+      }
+    };
+
+    fetchInvoice();
+  }, [id]);
 
   return (
     <ComponentCard title="Add Invoice">
@@ -143,13 +311,29 @@ const AddInvoice = () => {
 
         <div>
           <Label>Customer Name</Label>
-          <Input
-            name="customerName"
-            value={formData.customerName}
-            onChange={handleChange}
-            placeholder="Enter customer name"
-          />
-          {errors.customerName && <p className="text-red-500">{errors.customerName}</p>}
+          <select
+            className="w-full border rounded px-3 py-2"
+            value={formData.customerId}
+            onChange={(e) => {
+              const selectedCustomer = customers.find(
+                (c) => c.id === e.target.value
+              );
+
+              setFormData((prev) => ({
+                ...prev,
+                customerId: e.target.value, // ✅ store ID
+                state: selectedCustomer?.state || "",
+              }));
+            }}
+          >
+            <option value="">Select Customer</option>
+            {customers.map((cust) => (
+              <option key={cust.id} value={cust.id}>
+                {cust.name}
+              </option>
+            ))}
+          </select>
+          {errors.customerId && <p className="text-red-500">{errors.customerId}</p>}
         </div>
 
         <div>
@@ -169,17 +353,23 @@ const AddInvoice = () => {
             name="orderNumber"
             value={formData.orderNumber}
             onChange={handleChange}
+            onKeyDown={handleOrderNumberEnter}
             placeholder="Optional"
           />
         </div>
 
         <div>
           <Label>Date</Label>
-          <Input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
+          <DatePicker
+            id="invoice-date"
+            placeholder="Select date"
+            defaultDate={formData.date ?? undefined}
+            onChange={(selectedDates) => {
+              setFormData((prev) => ({
+                ...prev,
+                date: selectedDates[0], // IMPORTANT
+              }));
+            }}
           />
           {errors.date && <p className="text-red-500">{errors.date}</p>}
         </div>
@@ -190,6 +380,7 @@ const AddInvoice = () => {
             name="state"
             value={formData.state}
             onChange={handleChange}
+            disabled
           />
           {errors.state && <p className="text-red-500">{errors.state}</p>}
         </div>
@@ -201,14 +392,24 @@ const AddInvoice = () => {
           <div key={index} className="grid grid-cols-6 gap-3 mb-3">
 
             <div>
-              <Input
+              <select
                 name="item"
-                placeholder="Item"
                 value={item.item}
                 onChange={(e) => handleItemChange(index, e)}
-              />
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="">Select Item</option>
+                {inventoryData.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
               {errors[`item_${index}`] && (
-                <p className="text-red-500 text-xs">{errors[`item_${index}`]}</p>
+                <p className="text-red-500 text-xs">
+                  {errors[`item_${index}`]}
+                </p>
               )}
             </div>
 
@@ -248,13 +449,16 @@ const AddInvoice = () => {
             </div>
 
             <div>
-              <Input
-                type="number"
+              <select
                 name="taxRate"
-                placeholder="Tax %"
                 value={item.taxRate}
                 onChange={(e) => handleItemChange(index, e)}
-              />
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="">Tax %</option>
+                <option value="5">5%</option>
+                <option value="18">18%</option>
+              </select>
             </div>
 
             <div className="flex items-center justify-center">

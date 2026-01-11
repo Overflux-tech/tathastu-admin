@@ -23,6 +23,7 @@ import AddEstimate from "./pages/Estimate/AddEstimate";
 import Invoice from "./pages/Invoice/Invoice";
 import AddInvoice from "./pages/Invoice/AddInvoice";
 import EstimateView from "./pages/Estimate/EstimateView";
+import InvoiceView from "./pages/Invoice/InvoiceView";
 
 export default function App() {
   return (
@@ -59,6 +60,8 @@ export default function App() {
 
             <Route index path="/invoice" element={<Invoice />} />
             <Route path="/invoice/add" element={<AddInvoice />} />
+            <Route path="/invoice/edit/:id" element={<AddInvoice />} />
+            <Route path="/invoice/view/:id" element={<InvoiceView />} />
 
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />

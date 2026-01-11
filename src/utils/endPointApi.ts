@@ -24,6 +24,16 @@ export interface EndPointApi {
     createEstimate?: string;
     updateEstimate?: string;
     deleteEstimate?: string;
+    getLastEstimateNumber?: string;
+
+    //Invoice
+    getAllInvoice?: string;
+    getByIdInvoice?: string;
+    createInvoice?: string;
+    updateInvoice?: string;
+    deleteInvoice?: string;
+    getLastInvoiceNumber?: string;
+    estimateByNumber?: string
 }
 
 // Define and export the API endpoint object
@@ -53,6 +63,16 @@ const endPointApi: EndPointApi = {
     createEstimate: 'estimate/create',
     updateEstimate: 'estimate/update',
     deleteEstimate: 'estimate/delete', 
+    getLastEstimateNumber: 'estimate/last-estimate-number',
+    estimateByNumber: 'estimate/by-number',
+
+    //Invoice
+    getAllInvoice: 'invoice/getall',
+    getByIdInvoice: 'invoice/getById',
+    createInvoice: 'invoice/create',
+    updateInvoice: 'invoice/update',
+    deleteInvoice: 'invoice/delete',
+    getLastInvoiceNumber: 'invoice/last-invoice-number',
 };
 
 export default endPointApi;

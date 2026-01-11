@@ -8,15 +8,18 @@ import { toast } from "react-toastify";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
 import EstimateDownload from "./EstimateDownload";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 
 const Estimate = () => {
   const navigate = useNavigate();
   const [estimates, setEstimates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [downloadId, setDownloadId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   // 🔹 Get all customers
-  const getCustomers = async () => {
+  const getEstimates = async () => {
     try {
       setLoading(true);
       const res = await api.get(`${endPointApi.getAllEstimate}`);
@@ -32,7 +35,7 @@ const Estimate = () => {
   };
 
   useEffect(() => {
-    getCustomers();
+    getEstimates();
   }, []);
 
   // 🔹 View estimate
@@ -47,26 +50,25 @@ const Estimate = () => {
 
   // 🔹 Edit estimate
   const handleEdit = (id) => {
-    console.log("Editing estimate:", id);
     navigate(`/estimate/edit/${id}`);
   };
 
   // 🔹 Delete estimate
-  const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this customer?"
-    );
-    if (!confirmDelete) return;
+  const handleDelete = async (id: number | null) => {
+    if (!id) return;
 
     try {
       const res = await api.delete(`${endPointApi.deleteEstimate}/${id}`);
 
       if (res.data) {
         toast.success(res.data.message);
-        getCustomers(); // refresh list
+        getEstimates(); // refresh list
+        setShowDeleteModal(false);
+        setDeleteId(null);
       }
-    } catch (error) {
-      toast.error(error);
+    } catch (error: any) {
+      console.error(error.response?.data || error.message);
+      toast.error(error.response?.data?.message || "Error deleting estimate");
     }
   };
 
@@ -112,9 +114,9 @@ const Estimate = () => {
               </tr>
             ) : (
               estimates.map((item, index) => (
-                <tr key={item._id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-gray-50">
                   <td className="border p-2 text-center">{index + 1}</td>
-                  <td className="border p-2">{item.customerName}</td>
+                  <td className="border p-2">{item.customerId?.name}</td>
                   <td className="border p-2">{item.estimateNumber}</td>
                   <td className="border p-2">
                     {" "}
@@ -165,7 +167,10 @@ const Estimate = () => {
 
                       {/* Delete */}
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => {
+                          setDeleteId(item.id);
+                          setShowDeleteModal(true);
+                        }}
                         className="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
                         title="Delete"
                       >
@@ -188,6 +193,11 @@ const Estimate = () => {
           />
         </div>
       )}
+      <DeleteConfirmModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={() => handleDelete(deleteId)}
+      />
     </div>
   );
 };

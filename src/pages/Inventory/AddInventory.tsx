@@ -17,6 +17,7 @@ const AddInventory = () => {
     name: "",
     unit: "",
     hsn: "",
+    tax: "",
     purchase: "",
   });
   const [errors, setErrors] = useState({});
@@ -37,11 +38,11 @@ const AddInventory = () => {
 
   useEffect(() => {
     if (id) {
-      getCustomerById();
+      getInventoryById();
     }
   }, [id]);
 
-  const getCustomerById = async () => {
+  const getInventoryById = async () => {
     try {
       const res = await api.get(`${endPointApi.getByIdInventory}/${id}`);
 
@@ -52,6 +53,7 @@ const AddInventory = () => {
           name: customer.name || "",
           unit: customer.unit || "",
           hsn: customer.hsn || "",
+          tax: customer.tax || "",
           purchase: customer.purchase || "",
         });
       }
@@ -74,6 +76,10 @@ const AddInventory = () => {
     // Name
     if (!formData.hsn.trim()) {
       newErrors.hsn = "Customer hsn is required";
+    }
+    // Taxs
+    if (!formData.tax.trim()) {
+      newErrors.tax = "Customer tax is required";
     }
     // Name
     if (!formData.purchase.trim()) {
@@ -152,6 +158,24 @@ const AddInventory = () => {
           />
           {errors.hsn && (
             <p className="text-red-500 text-sm mt-1">{errors.hsn}</p>
+          )}
+        </div>
+
+        {/* Tax */}
+        <div>
+          <Label>Tax</Label>
+          <select
+            name="tax"
+            value={formData.tax}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2"
+          >
+            <option value="">Tax %</option>
+            <option value="5">5%</option>
+            <option value="18">18%</option>
+          </select>
+          {errors.tax && (
+            <p className="text-red-500 text-sm mt-1">{errors.tax}</p>
           )}
         </div>
         {/* purchase */}

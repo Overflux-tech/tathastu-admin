@@ -23,22 +23,26 @@ export default function DatePicker({
   defaultDate,
   placeholder,
 }: PropsType) {
-  useEffect(() => {
-    const flatPickr = flatpickr(`#${id}`, {
-      mode: mode || "single",
-      static: true,
-      monthSelectorType: "static",
-      dateFormat: "Y-m-d",
-      defaultDate,
-      onChange,
-    });
+ useEffect(() => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // 🔒 important
 
-    return () => {
-      if (!Array.isArray(flatPickr)) {
-        flatPickr.destroy();
-      }
-    };
-  }, [mode, onChange, id, defaultDate]);
+  const fp = flatpickr(`#${id}`, {
+    mode: mode || "single",
+    static: true,
+    monthSelectorType: "static",
+    dateFormat: "Y-m-d",
+    defaultDate,
+    // minDate: today, // 👈 disable past dates
+    onChange,
+  });
+
+  return () => {
+    if (!Array.isArray(fp)) {
+      fp.destroy();
+    }
+  };
+}, [id, mode, defaultDate, onChange]);
 
   return (
     <div>

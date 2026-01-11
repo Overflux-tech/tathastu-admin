@@ -8,18 +8,21 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
+import { generateEstimateNumber } from "../../utils/helper";
+import DatePicker from "../../components/form/date-picker";
 
 const AddEstimate = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [formData, setFormData] = useState({
-    customerName: "",
+    customerId: "",
     estimateNumber: "",
-    date: "",
+    date: null as Date | null,
     state: "",
     items: [
       {
+        name: "",
         item: "",
         description: "",
         qty: 0,
@@ -28,9 +31,28 @@ const AddEstimate = () => {
       },
     ],
   });
-
   const [errors, setErrors] = useState({});
   const [customers, setCustomers] = useState([]);
+  const [inventoryData, setInventoryData] = useState([]);
+
+  useEffect(() => {
+    // Example: last saved estimate number
+    const fetchLastEstimateNumber = async () => {
+      try {
+        const res = await api.get(`${endPointApi.getLastEstimateNumber}`);
+        const lastNumber = res.data.lastEstimateNumber || "TE2526000";
+        const newNumber = generateEstimateNumber(lastNumber);
+
+        setFormData((prev) => ({
+          ...prev,
+          estimateNumber: newNumber,
+        }));
+      } catch (err) {
+        console.error("Failed to fetch last estimate number", err);
+      }
+    };
+    fetchLastEstimateNumber()
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,17 +68,35 @@ const AddEstimate = () => {
     }));
   };
 
-  const handleItemChange = (index, e) => {
-    const { name, value } = e.target;
-    const updatedItems = [...formData.items];
+  const handleItemChange = (index: number, e: any) => {
+  const { name, value } = e.target;
 
-    updatedItems[index][name] = value;
+  setFormData((prev: any) => {
+    const updatedItems = [...prev.items];
 
-    setFormData((prev) => ({
+    // update current field
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [name]: value,
+    };
+
+    // when item is selected, auto-fill tax
+    if (name === "item") {
+      const selectedItem = inventoryData.find(
+        (inv: any) => inv.id === value
+      );
+
+      if (selectedItem) {
+        updatedItems[index].taxRate = selectedItem.tax; // auto set tax
+      }
+    }
+
+    return {
       ...prev,
       items: updatedItems,
-    }));
-  };
+    };
+  });
+};
 
   //   getById
   useEffect(() => {
@@ -69,27 +109,29 @@ const AddEstimate = () => {
         const data = res.data.data;
 
         setFormData({
-          customerName: data.customerName || "",
+          customerId: data.customerId?.id || "",
           estimateNumber: data.estimateNumber || "",
-          date: data.date ? data.date.split("T")[0] : "",
+          date: data.date ? new Date(data.date) : null,
           state: data.state || "",
           items: data.items?.length
             ? data.items.map((item) => ({
-                item: item.item || "",
-                description: item.description || "",
-                qty: item.qty || 0,
-                rate: item.rate || 0,
-                taxRate: item.taxRate || 0,
-              }))
+              item: item.item?.id || "",
+              name: item.item?.name || "",
+              description: item.description || "",
+              qty: item.qty || 0,
+              rate: item.rate || 0,
+              taxRate: item.taxRate || 0,
+            }))
             : [
-                {
-                  item: "",
-                  description: "",
-                  qty: 0,
-                  rate: 0,
-                  taxRate: 0,
-                },
-              ],
+              {
+                name: "",
+                item: "",
+                description: "",
+                qty: 0,
+                rate: 0,
+                taxRate: 0,
+              },
+            ],
         });
       } catch (error) {
         toast.error("Failed to load estimate ❌");
@@ -100,28 +142,47 @@ const AddEstimate = () => {
     fetchEstimate();
   }, [id]);
 
+  const getInventory = async () => {
+    try {
+      // setLoading(true);
+
+      const res = await api.get(`${endPointApi.getAllInventory}`);
+
+      if (res.data?.success) {
+        setInventoryData(res.data.data || []);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getInventory();
+  }, []);
+
   const addItem = () => {
     setFormData((prev) => ({
       ...prev,
       items: [
         ...prev.items,
-        { item: "", description: "", qty: "", rate: "", taxRate: "" },
+        { item: "", name: "", description: "", qty: "", rate: "", taxRate: "" },
       ],
     }));
   };
 
+  // 
   const removeItem = (index) => {
     const updatedItems = formData.items.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, items: updatedItems }));
   };
 
-  console.log('customers', customers)
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:3688/api/v1/customer/getall"
-        );
+        const res = await api.get(`${endPointApi.getAllCustomer}`);
+
         setCustomers(res.data.data || []);
       } catch (err) {
         toast.error("Failed to load customers");
@@ -134,9 +195,10 @@ const AddEstimate = () => {
   const validateForm = () => {
     let newErrors = {};
 
-    if (!formData.customerName.trim()) {
-      newErrors.customerName = "Customer name is required";
+    if (!formData.customerId) {
+      newErrors.customerId = "Customer is required";
     }
+
 
     if (!formData.estimateNumber.trim()) {
       newErrors.estimateNumber = "Estimate number is required";
@@ -172,18 +234,22 @@ const AddEstimate = () => {
     try {
       // 🔁 Frontend → Backend payload mapping
       const payload = {
-        customerName: formData.customerName,
+        customerId: formData.customerId,
         estimateNumber: formData.estimateNumber,
         date: formData.date,
         state: formData.state,
-        items: formData.items.map((item) => ({
-          description:
-            item.item + (item.description ? ` - ${item.description}` : ""),
-          item: "test",
-          qty: Number(item.qty),
-          rate: Number(item.rate),
-          taxRate: Number(item.taxRate),
-        })),
+        items: formData.items.map((item) => {
+          const selectedItem = inventoryData.find((p) => p.id === item.item);
+          return {
+            description:
+              (selectedItem?.name || "") +
+              (item.description ? ` - ${item.description}` : ""),
+            item: item.item, // still just the ID
+            qty: Number(item.qty),
+            rate: Number(item.rate),
+            taxRate: Number(item.taxRate),
+          };
+        }),
       };
 
       const method = id ? "put" : "post";
@@ -192,7 +258,6 @@ const AddEstimate = () => {
         : `${endPointApi.createEstimate}`;
 
       const res = await api[method](url, payload);
-      console.log("dsdsdsd");
 
       if (res.data) {
         toast.success(
@@ -207,37 +272,36 @@ const AddEstimate = () => {
   };
 
   return (
-    <ComponentCard title="Add Estimate">
+    <ComponentCard title={id ? "Edit Estimate" : "Add Estimate"}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Label>Customer Name</Label>
-
           <select
             className="w-full border rounded px-3 py-2"
-            value={formData.customerName}
+            value={formData.customerId}
             onChange={(e) => {
               const selectedCustomer = customers.find(
-                (c) => c.customerName === e.target.value
+                (c) => c.id === e.target.value
               );
 
               setFormData((prev) => ({
                 ...prev,
-                customerName: e.target.value,
+                customerId: e.target.value, // ✅ store ID
                 state: selectedCustomer?.state || "",
               }));
             }}
           >
             <option value="">Select Customer</option>
             {customers.map((cust) => (
-              <option key={cust._id} value={cust.name}>
+              <option key={cust.id} value={cust.id}>
                 {cust.name}
               </option>
             ))}
           </select>
-
-          {errors.customerName && (
-            <p className="text-red-500">{errors.customerName}</p>
+          {errors.customerId && (
+            <p className="text-red-500">{errors.customerId}</p>
           )}
+
         </div>
 
         <div>
@@ -254,19 +318,30 @@ const AddEstimate = () => {
         </div>
 
         <div>
-          <Label>Date</Label>
-          <Input
-            type="date"
-            name="date"
-            value={formData.date}
-            onChange={handleChange}
+          <DatePicker
+            id="estimate-date"
+            label="Estimate Date"
+            placeholder="Select date"
+            minDate={new Date()} 
+            defaultDate={formData.date}
+            onChange={(selectedDates) => {
+              setFormData((prev) => ({
+                ...prev,
+                date: selectedDates[0], // IMPORTANT
+              }));
+            }}
           />
           {errors.date && <p className="text-red-500">{errors.date}</p>}
         </div>
 
         <div>
           <Label>State</Label>
-          <Input name="state" value={formData.state} onChange={handleChange} />
+          <Input
+            name="state"
+            value={formData.state}
+            onChange={handleChange}
+            disabled
+          />
           {errors.state && <p className="text-red-500">{errors.state}</p>}
         </div>
       </div>
@@ -276,15 +351,36 @@ const AddEstimate = () => {
         {formData.items.map((item, index) => (
           <div key={index} className="grid grid-cols-5 gap-3 mb-3">
             <div>
-              <Input
+              <select
                 name="item"
-                placeholder="Item"
                 value={item.item}
                 onChange={(e) => handleItemChange(index, e)}
-              />
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="">Select Item</option>
+                {inventoryData.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+
               {errors[`item_${index}`] && (
                 <p className="text-red-500 text-xs">
                   {errors[`item_${index}`]}
+                </p>
+              )}
+            </div>
+            <div>
+              <Input
+                name="description"
+                placeholder="description"
+                value={item.description}
+                onChange={(e) => handleItemChange(index, e)}
+              />
+              {errors[`description_${index}`] && (
+                <p className="text-red-500 text-xs">
+                  {errors[`description_${index}`]}
                 </p>
               )}
             </div>

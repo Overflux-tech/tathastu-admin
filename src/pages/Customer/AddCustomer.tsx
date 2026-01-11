@@ -212,14 +212,7 @@ const AddCustomer = () => {
     } else if (!/^[0-9]{10}$/.test(formData.mobile)) {
       newErrors.mobile = "Mobile number must be 10 digits";
     }
-
-    // Email
-    if (!formData.email) {
-      newErrors.email = "Email address is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Enter a valid email address";
-    }
-
+    
     // GST
     if (!formData.gst_number) {
       newErrors.gst_number = "GST number is required";
@@ -314,9 +307,6 @@ const AddCustomer = () => {
             onChange={handleChange}
             placeholder="Enter email address"
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-          )}
         </div>
 
         {/* GST */}
