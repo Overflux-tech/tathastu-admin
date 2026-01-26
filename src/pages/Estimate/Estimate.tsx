@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { Eye, Download, Edit, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
 import { api } from "../../utils/axiosInstance";
@@ -18,7 +17,7 @@ const Estimate = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // 🔹 Get all customers
+  // 🔹 Get all estimate
   const getEstimates = async () => {
     try {
       setLoading(true);

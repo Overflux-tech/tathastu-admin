@@ -7,110 +7,13 @@ import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
+import TextArea from "../../components/form/input/TextArea";
+import Select from "../../components/form/Select";
+import { cityOptions, getStateFromCity } from "../../utils/cityStateData";
 
 const AddCustomer = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const cityData = [
-    // Gujarat
-    { city: "Ahmedabad", state: "Gujarat", country: "India" },
-    { city: "Surat", state: "Gujarat", country: "India" },
-    { city: "Vadodara", state: "Gujarat", country: "India" },
-    { city: "Rajkot", state: "Gujarat", country: "India" },
-    { city: "Bhavnagar", state: "Gujarat", country: "India" },
-    { city: "Jamnagar", state: "Gujarat", country: "India" },
-
-    // Maharashtra
-    { city: "Mumbai", state: "Maharashtra", country: "India" },
-    { city: "Pune", state: "Maharashtra", country: "India" },
-    { city: "Nagpur", state: "Maharashtra", country: "India" },
-    { city: "Nashik", state: "Maharashtra", country: "India" },
-    { city: "Aurangabad", state: "Maharashtra", country: "India" },
-    { city: "Thane", state: "Maharashtra", country: "India" },
-
-    // Rajasthan
-    { city: "Jaipur", state: "Rajasthan", country: "India" },
-    { city: "Jodhpur", state: "Rajasthan", country: "India" },
-    { city: "Udaipur", state: "Rajasthan", country: "India" },
-    { city: "Kota", state: "Rajasthan", country: "India" },
-    { city: "Ajmer", state: "Rajasthan", country: "India" },
-
-    // Delhi
-    { city: "Delhi", state: "Delhi", country: "India" },
-    { city: "New Delhi", state: "Delhi", country: "India" },
-
-    // Uttar Pradesh
-    { city: "Lucknow", state: "Uttar Pradesh", country: "India" },
-    { city: "Kanpur", state: "Uttar Pradesh", country: "India" },
-    { city: "Noida", state: "Uttar Pradesh", country: "India" },
-    { city: "Ghaziabad", state: "Uttar Pradesh", country: "India" },
-    { city: "Agra", state: "Uttar Pradesh", country: "India" },
-    { city: "Varanasi", state: "Uttar Pradesh", country: "India" },
-
-    // Madhya Pradesh
-    { city: "Bhopal", state: "Madhya Pradesh", country: "India" },
-    { city: "Indore", state: "Madhya Pradesh", country: "India" },
-    { city: "Gwalior", state: "Madhya Pradesh", country: "India" },
-    { city: "Jabalpur", state: "Madhya Pradesh", country: "India" },
-
-    // Karnataka
-    { city: "Bengaluru", state: "Karnataka", country: "India" },
-    { city: "Mysuru", state: "Karnataka", country: "India" },
-    { city: "Mangaluru", state: "Karnataka", country: "India" },
-    { city: "Hubli", state: "Karnataka", country: "India" },
-
-    // Tamil Nadu
-    { city: "Chennai", state: "Tamil Nadu", country: "India" },
-    { city: "Coimbatore", state: "Tamil Nadu", country: "India" },
-    { city: "Madurai", state: "Tamil Nadu", country: "India" },
-    { city: "Salem", state: "Tamil Nadu", country: "India" },
-    { city: "Trichy", state: "Tamil Nadu", country: "India" },
-
-    // Telangana
-    { city: "Hyderabad", state: "Telangana", country: "India" },
-    { city: "Warangal", state: "Telangana", country: "India" },
-
-    // Andhra Pradesh
-    { city: "Visakhapatnam", state: "Andhra Pradesh", country: "India" },
-    { city: "Vijayawada", state: "Andhra Pradesh", country: "India" },
-    { city: "Guntur", state: "Andhra Pradesh", country: "India" },
-
-    // West Bengal
-    { city: "Kolkata", state: "West Bengal", country: "India" },
-    { city: "Howrah", state: "West Bengal", country: "India" },
-    { city: "Durgapur", state: "West Bengal", country: "India" },
-
-    // Punjab
-    { city: "Chandigarh", state: "Punjab", country: "India" },
-    { city: "Amritsar", state: "Punjab", country: "India" },
-    { city: "Ludhiana", state: "Punjab", country: "India" },
-    { city: "Jalandhar", state: "Punjab", country: "India" },
-
-    // Haryana
-    { city: "Gurgaon", state: "Haryana", country: "India" },
-    { city: "Faridabad", state: "Haryana", country: "India" },
-    { city: "Panipat", state: "Haryana", country: "India" },
-
-    // Kerala
-    { city: "Kochi", state: "Kerala", country: "India" },
-    { city: "Trivandrum", state: "Kerala", country: "India" },
-    { city: "Kozhikode", state: "Kerala", country: "India" },
-
-    // Bihar
-    { city: "Patna", state: "Bihar", country: "India" },
-    { city: "Gaya", state: "Bihar", country: "India" },
-
-    // Odisha
-    { city: "Bhubaneswar", state: "Odisha", country: "India" },
-    { city: "Cuttack", state: "Odisha", country: "India" },
-
-    // Assam
-    { city: "Guwahati", state: "Assam", country: "India" },
-
-    // Goa
-    { city: "Panaji", state: "Goa", country: "India" },
-    { city: "Margao", state: "Goa", country: "India" },
-  ];
 
   const [formData, setFormData] = useState({
     name: "",
@@ -125,26 +28,24 @@ const AddCustomer = () => {
   });
   const [errors, setErrors] = useState({});
 
-  const handleCityChange = (e: any) => {
-    const selectedCity = e.target.value;
-
-    const result = cityData.find((item) => item.city === selectedCity);
+  const handleCityChange = (value: string) => {
+    const state = getStateFromCity(value);
 
     setFormData((prev) => ({
       ...prev,
-      city: selectedCity,
-      state: result?.state || "",
-      country: result?.country || "",
+      city: value,
+      state,
+      country: "India",
     }));
 
-    // Clear city error immediately
     setErrors((prev) => ({
       ...prev,
       city: "",
+      state: "",
     }));
   };
 
-  const handleChange = (e: any) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
 
     // Allow only numbers
@@ -212,7 +113,7 @@ const AddCustomer = () => {
     } else if (!/^[0-9]{10}$/.test(formData.mobile)) {
       newErrors.mobile = "Mobile number must be 10 digits";
     }
-    
+
     // GST
     if (!formData.gst_number) {
       newErrors.gst_number = "GST number is required";
@@ -264,7 +165,7 @@ const AddCustomer = () => {
 
   return (
     <ComponentCard title="Add Customer">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Customer Name */}
         <div>
           <Label>Customer Name</Label>
@@ -325,32 +226,24 @@ const AddCustomer = () => {
         </div>
 
         {/* Address */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 md:row-span-2 h-full">
           <Label>Address</Label>
-          <Input
-            type="text"
+          <TextArea
             name="address"
             value={formData.address}
             onChange={handleChange}
-            placeholder="Enter complete address"
+            placeholder="Enter your address"
           />
         </div>
 
         {/* City */}
         <div>
           <Label>City</Label>
-          <select
+          <Select
+            options={cityOptions}
             value={formData.city}
             onChange={handleCityChange}
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select city</option>
-            {cityData.map((item, index) => (
-              <option key={index} value={item.city}>
-                {item.city}
-              </option>
-            ))}
-          </select>
+          />
           {errors.city && (
             <p className="text-red-500 text-sm mt-1">{errors.city}</p>
           )}

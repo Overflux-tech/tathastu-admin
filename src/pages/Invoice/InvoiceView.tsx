@@ -6,6 +6,26 @@ import { toast } from "react-toastify";
 import { MoveLeft } from "lucide-react";
 import { numberToWords } from "../../utils/helper";
 
+type BankDetails = {
+  account_name: string;
+  account_number: string;
+  bank_name: string;
+  ifsc_code: string;
+  branch: string;
+};
+
+type Company = {
+  company_name: string;
+  address: string;
+  city: string;
+  state: string;
+  phone_number: string;
+  company_logo: string;
+  pincode: string;
+  gst_number: string;
+  bank_details?: BankDetails;
+};
+
 export default function InvoiceView() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -32,6 +52,34 @@ export default function InvoiceView() {
     grandTotal: 0,
     items: [] as any[],
   });
+
+  const [company, setCompany] = useState<Company | null>(null);
+  
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const res = await api.get(endPointApi.getAllCompany);
+
+        if (res.data.success && res.data.data.length > 0) {
+          const raw = res.data.data[0];
+
+          const parsedCompany: Company = {
+            ...raw,
+            bank_details:
+              typeof raw.bank_details === "string"
+                ? JSON.parse(raw.bank_details)
+                : raw.bank_details,
+          };
+
+          setCompany(parsedCompany);
+        }
+      } catch (error) {
+        console.error("Failed to fetch company:", error);
+      }
+    };
+
+    fetchCompany();
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -90,15 +138,16 @@ export default function InvoiceView() {
         {/* Header */}
         <div className="grid grid-cols-2">
           <div>
-            <h1 className="text-xl font-bold mb-2">TEST ENERGY</h1>
+            <h1 className="text-xl font-bold mb-2">{company?.company_name}</h1>
             <p className="text-sm leading-relaxed">
-              30 Pitt Street, Sydney Harbour Marriot
+              {company?.address}
               <br />
-              SURAT, Gujarat - 394210
+              {company?.city}, {company?.state} - {company?.pincode}
+              <br />
             </p>
-            <p className="text-sm mt-1">Phone: 7069929000</p>
+            <p className="text-sm mt-1">Phone: {company?.phone_number}</p>
             <p className="text-sm font-semibold mt-1">
-              GSTN: 24DAFPG4786M8Z9
+              GSTN: {company?.gst_number}
             </p>
           </div>
           <div className="flex justify-end">
@@ -113,9 +162,7 @@ export default function InvoiceView() {
             <div className="flex">
               <span className="font-semibold w-40">Invoice Date:</span>
               <span>
-                {formData.date
-                  ? formData.date.toLocaleDateString()
-                  : ""}
+                {formData.date ? formData.date.toLocaleDateString() : ""}
               </span>
             </div>
             <div className="flex">
@@ -210,9 +257,7 @@ export default function InvoiceView() {
             </div>
             <div className="p-2">
               <p className="text-sm font-semibold">Total In Words:</p>
-              <p className="text-sm">
-                {numberToWords(formData.grandTotal)}
-              </p>
+              <p className="text-sm">{numberToWords(formData.grandTotal)}</p>
             </div>
           </div>
         </div>

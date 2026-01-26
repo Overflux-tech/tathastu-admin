@@ -2,7 +2,7 @@ import type React from "react";
 import type { FC } from "react";
 
 interface InputProps {
-  type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
+  type?: "text" | "number" | "email" | "password" | "date" | "time" | "file" | string;
   id?: string;
   name?: string;
   placeholder?: string;
@@ -14,6 +14,7 @@ interface InputProps {
   max?: string;
   step?: number;
   disabled?: boolean;
+   readOnly?: boolean; 
   success?: boolean;
   error?: boolean;
   hint?: string;
@@ -32,6 +33,7 @@ const Input: FC<InputProps> = ({
   max,
   step,
   disabled = false,
+  readOnly = false,
   success = false,
   error = false,
   hint,
@@ -55,13 +57,15 @@ const Input: FC<InputProps> = ({
         id={id}
         name={name}
         placeholder={placeholder}
-        value={value}
+        // value={value}
+        {...(type !== "file" ? { value } : {})}
         onChange={onChange}
         onKeyDown={onKeyDown}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
+        readOnly={readOnly}
         className={inputClasses}
       />
 

@@ -3,13 +3,14 @@ import React, { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
 import ComponentCard from "../../components/common/ComponentCard";
-import axios from "axios";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
 import { generateEstimateNumber } from "../../utils/helper";
 import DatePicker from "../../components/form/date-picker";
+import { Trash2 } from "lucide-react";
+import Select from "../../components/form/Select";
 
 const AddEstimate = () => {
   const navigate = useNavigate();
@@ -18,16 +19,16 @@ const AddEstimate = () => {
   const [formData, setFormData] = useState({
     customerId: "",
     estimateNumber: "",
-    date: null as Date | null,
+    date: new Date(),
     state: "",
     items: [
       {
         name: "",
         item: "",
         description: "",
-        qty: 0,
-        rate: 0,
-        taxRate: 0,
+        qty: "",
+        rate: "",
+        taxRate: "",
       },
     ],
   });
@@ -51,7 +52,7 @@ const AddEstimate = () => {
         console.error("Failed to fetch last estimate number", err);
       }
     };
-    fetchLastEstimateNumber()
+    fetchLastEstimateNumber();
   }, []);
 
   const handleChange = (e) => {
@@ -69,36 +70,34 @@ const AddEstimate = () => {
   };
 
   const handleItemChange = (index: number, e: any) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  setFormData((prev: any) => {
-    const updatedItems = [...prev.items];
+    setFormData((prev: any) => {
+      const updatedItems = [...prev.items];
 
-    // update current field
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [name]: value,
-    };
+      // update current field
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [name]: value,
+      };
 
-    // when item is selected, auto-fill tax
-    if (name === "item") {
-      const selectedItem = inventoryData.find(
-        (inv: any) => inv.id === value
-      );
+      // when item is selected, auto-fill tax
+      if (name === "item") {
+        const selectedItem = inventoryData.find((inv: any) => inv.id === value);
 
-      if (selectedItem) {
-        updatedItems[index].taxRate = selectedItem.tax; // auto set tax
+        if (selectedItem) {
+          updatedItems[index].taxRate = selectedItem.tax; // auto set tax
+        }
       }
-    }
 
-    return {
-      ...prev,
-      items: updatedItems,
-    };
-  });
-};
+      return {
+        ...prev,
+        items: updatedItems,
+      };
+    });
+  };
 
-  //   getById
+  //   getById Estimate
   useEffect(() => {
     if (!id) return;
 
@@ -115,23 +114,23 @@ const AddEstimate = () => {
           state: data.state || "",
           items: data.items?.length
             ? data.items.map((item) => ({
-              item: item.item?.id || "",
-              name: item.item?.name || "",
-              description: item.description || "",
-              qty: item.qty || 0,
-              rate: item.rate || 0,
-              taxRate: item.taxRate || 0,
-            }))
+                item: item.item?.id || "",
+                name: item.item?.name || "",
+                description: item.description || "",
+                qty: item.qty || 0,
+                rate: item.rate || 0,
+                taxRate: item.taxRate || 0,
+              }))
             : [
-              {
-                name: "",
-                item: "",
-                description: "",
-                qty: 0,
-                rate: 0,
-                taxRate: 0,
-              },
-            ],
+                {
+                  name: "",
+                  item: "",
+                  description: "",
+                  qty: "",
+                  rate: "",
+                  taxRate: "",
+                },
+              ],
         });
       } catch (error) {
         toast.error("Failed to load estimate ❌");
@@ -172,7 +171,7 @@ const AddEstimate = () => {
     }));
   };
 
-  // 
+  //
   const removeItem = (index) => {
     const updatedItems = formData.items.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, items: updatedItems }));
@@ -198,7 +197,6 @@ const AddEstimate = () => {
     if (!formData.customerId) {
       newErrors.customerId = "Customer is required";
     }
-
 
     if (!formData.estimateNumber.trim()) {
       newErrors.estimateNumber = "Estimate number is required";
@@ -271,37 +269,90 @@ const AddEstimate = () => {
     }
   };
 
+  const subtotal = formData.items.reduce((sum, item) => {
+    const rowTotal = Number(item.qty || 0) * Number(item.rate || 0);
+    return sum + rowTotal;
+  }, 0);
+
+  // Initialize tax summary
+  let taxSummary = {
+    sgst2_5: 0,
+    cgst2_5: 0,
+    sgst9: 0,
+    cgst9: 0,
+    igst2_5: 0,
+    igst9: 0,
+  };
+
+  formData.items.forEach((item) => {
+    const rowTotal = Number(item.qty || 0) * Number(item.rate || 0);
+    const tax = Number(item.taxRate || 0);
+
+    if (formData.state === "Gujarat") {
+      // SGST + CGST for Gujarat
+      if (tax === 5) {
+        taxSummary.sgst2_5 += rowTotal * 0.025;
+        taxSummary.cgst2_5 += rowTotal * 0.025;
+      }
+      if (tax === 18) {
+        taxSummary.sgst9 += rowTotal * 0.09;
+        taxSummary.cgst9 += rowTotal * 0.09;
+      }
+    } else {
+      // IGST for outside Gujarat
+      if (tax === 5) taxSummary.igst2_5 += rowTotal * 0.05;
+      if (tax === 18) taxSummary.igst9 += rowTotal * 0.18;
+    }
+  });
+
+  // Grand total
+  const grandTotal =
+    subtotal +
+    taxSummary.sgst2_5 +
+    taxSummary.cgst2_5 +
+    taxSummary.sgst9 +
+    taxSummary.cgst9 +
+    taxSummary.igst2_5 +
+    taxSummary.igst9;
+
+  const customerOptions = customers.map((cust) => ({
+    value: cust.id,
+    label: cust.name,
+  }));
+
+  const inventoryOptions = inventoryData.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
+
   return (
     <ComponentCard title={id ? "Edit Estimate" : "Add Estimate"}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div>
-          <Label>Customer Name</Label>
-          <select
-            className="w-full border rounded px-3 py-2"
+          <div className="flex items-center justify-between">
+            <Label>Customer Name</Label>
+          </div>
+          <Select
+            options={customerOptions}
             value={formData.customerId}
-            onChange={(e) => {
-              const selectedCustomer = customers.find(
-                (c) => c.id === e.target.value
-              );
+            placeholder="Select Customer"
+            showAddButton={true}
+            onAddNew={() => navigate("/customer/add")}
+            addButtonText="Add New Customer"
+            onChange={(value) => {
+              const selectedCustomer = customers.find((c) => c.id === value);
 
               setFormData((prev) => ({
                 ...prev,
-                customerId: e.target.value, // ✅ store ID
+                customerId: value, // store ID
                 state: selectedCustomer?.state || "",
               }));
             }}
-          >
-            <option value="">Select Customer</option>
-            {customers.map((cust) => (
-              <option key={cust.id} value={cust.id}>
-                {cust.name}
-              </option>
-            ))}
-          </select>
+          />
+
           {errors.customerId && (
             <p className="text-red-500">{errors.customerId}</p>
           )}
-
         </div>
 
         <div>
@@ -322,7 +373,6 @@ const AddEstimate = () => {
             id="estimate-date"
             label="Estimate Date"
             placeholder="Select date"
-            minDate={new Date()} 
             defaultDate={formData.date}
             onChange={(selectedDates) => {
               setFormData((prev) => ({
@@ -349,42 +399,40 @@ const AddEstimate = () => {
       {/* Items */}
       <div className="mt-6">
         {formData.items.map((item, index) => (
-          <div key={index} className="grid grid-cols-5 gap-3 mb-3">
-            <div>
-              <select
-                name="item"
-                value={item.item}
-                onChange={(e) => handleItemChange(index, e)}
-                className="w-full border rounded px-3 py-2"
-              >
-                <option value="">Select Item</option>
-                {inventoryData.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-
-              {errors[`item_${index}`] && (
-                <p className="text-red-500 text-xs">
-                  {errors[`item_${index}`]}
-                </p>
-              )}
+          <div
+            key={index}
+            className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-3 mb-3 items-center"
+          >
+            {/* Item */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select
+                  options={inventoryOptions}
+                  value={item.item}
+                  placeholder="Select Item"
+                  showAddButton={true}
+                  onAddNew={() => navigate("/inventory/add")}
+                  addButtonText="Add New Inventory"
+                  onChange={(value) =>
+                    handleItemChange(index, {
+                      target: { name: "item", value },
+                    } as any)
+                  }
+                />
+              </div>
             </div>
+
+            {/* Description */}
             <div>
               <Input
                 name="description"
-                placeholder="description"
+                placeholder="Description"
                 value={item.description}
                 onChange={(e) => handleItemChange(index, e)}
               />
-              {errors[`description_${index}`] && (
-                <p className="text-red-500 text-xs">
-                  {errors[`description_${index}`]}
-                </p>
-              )}
             </div>
 
+            {/* Qty */}
             <div>
               <Input
                 type="number"
@@ -393,11 +441,9 @@ const AddEstimate = () => {
                 value={item.qty}
                 onChange={(e) => handleItemChange(index, e)}
               />
-              {errors[`qty_${index}`] && (
-                <p className="text-red-500 text-xs">{errors[`qty_${index}`]}</p>
-              )}
             </div>
 
+            {/* Rate */}
             <div>
               <Input
                 type="number"
@@ -406,41 +452,122 @@ const AddEstimate = () => {
                 value={item.rate}
                 onChange={(e) => handleItemChange(index, e)}
               />
-              {errors[`rate_${index}`] && (
-                <p className="text-red-500 text-xs">
-                  {errors[`rate_${index}`]}
-                </p>
-              )}
             </div>
 
+            {/* Tax */}
             <div>
-              <select
-                name="taxRate"
+              <Select
                 value={item.taxRate}
-                onChange={(e) => handleItemChange(index, e)}
-                className="w-full border rounded px-3 py-2"
-              >
-                <option value="">Tax %</option>
-                <option value="5">5%</option>
-                <option value="18">18%</option>
-              </select>
+                placeholder="Tax %"
+                options={[
+                  { value: "5", label: "5%" },
+                  { value: "18", label: "18%" },
+                ]}
+                onChange={(value) =>
+                  handleItemChange(index, {
+                    target: { name: "taxRate", value },
+                  } as any)
+                }
+              />
             </div>
 
-            <div className="flex items-center justify-center">
+            {/* Total */}
+            <div>
+              <Input
+                name="total"
+                placeholder="Total"
+                value={
+                  item.qty && item.rate
+                    ? Number(item.qty) * Number(item.rate)
+                    : ""
+                }
+                readOnly
+              />
+            </div>
+
+            {/* Delete */}
+            <div className="flex justify-center">
               <button
                 type="button"
                 onClick={() => removeItem(index)}
-                className="text-red-500 font-bold"
+                className="text-red-500"
               >
-                ✕
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           </div>
         ))}
 
-        <button onClick={addItem} className="primary-color-text">
-          + Add Item
-        </button>
+        <div className="grid grid-cols-2 gap-4 max-w-full">
+          {/* Left Side: Add Item Button */}
+          <div className="flex items-start">
+            <button onClick={addItem} className="primary-color-text">
+              {/* <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90"> */}
+              + Add Item
+            </button>
+          </div>
+
+          {/* Right Side: Subtotal & Tax Grid */}
+          <div className="border-t pt-4 grid grid-cols-2 gap-y-2 text-sm justify-items-end">
+            <span className="justify-self-start">Subtotal</span>
+            <span>{subtotal.toFixed(2)}</span>
+
+            {/* For Gujarat */}
+            {formData.state === "Gujarat" && (
+              <>
+                {taxSummary.sgst9 > 0 && (
+                  <>
+                    <span className="justify-self-start">SGST @ 9%</span>
+                    <span>{taxSummary.sgst9.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.cgst9 > 0 && (
+                  <>
+                    <span className="justify-self-start">CGST @ 9%</span>
+                    <span>{taxSummary.cgst9.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.sgst2_5 > 0 && (
+                  <>
+                    <span className="justify-self-start">SGST @ 2.5%</span>
+                    <span>{taxSummary.sgst2_5.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.cgst2_5 > 0 && (
+                  <>
+                    <span className="justify-self-start">CGST @ 2.5%</span>
+                    <span>{taxSummary.cgst2_5.toFixed(2)}</span>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* For Outside Gujarat */}
+            {formData.state !== "Gujarat" && (
+              <>
+                {taxSummary.igst9 > 0 && (
+                  <>
+                    <span className="justify-self-start">IGST @ 18%</span>
+                    <span>{taxSummary.igst9.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.igst2_5 > 0 && (
+                  <>
+                    <span className="justify-self-start">IGST @ 5%</span>
+                    <span>{taxSummary.igst2_5.toFixed(2)}</span>
+                  </>
+                )}
+              </>
+            )}
+
+            <span className="font-bold justify-self-start border-t pt-2">
+              TOTAL
+            </span>
+            <span className="font-bold text-lg border-t pt-2">
+              {grandTotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
       </div>
 
       <div className="flex justify-end mt-6 gap-3">

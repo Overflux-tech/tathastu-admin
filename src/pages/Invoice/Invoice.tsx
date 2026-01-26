@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
 import { toast } from "react-toastify";
@@ -31,10 +30,11 @@ const Invoice = () => {
   const getInvoice = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(
-        "http://localhost:3688/api/v1/invoice/getall"
-      );
+      // const res = await axios.get(
+      //   "http://localhost:3688/api/v1/invoice/getall"
+      // );
 
+      const res = await api.get(`${endPointApi.getAllInvoice}`);
       if (res.data?.success) {
         setInvoices(res.data.data || []);
       }

@@ -1,13 +1,20 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
-import Select from "../../components/form/Select";
 import ComponentCard from "../../components/common/ComponentCard";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
+import Select from "../../components/form/Select";
+
+type FormErrors = {
+  name?: string;
+  unit?: string;
+  hsn?: string;
+  tax?: string;
+  purchase?: string;
+};
 
 const AddInventory = () => {
   const navigate = useNavigate();
@@ -20,10 +27,26 @@ const AddInventory = () => {
     tax: "",
     purchase: "",
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
+
+    if (name === "hsn") {
+      // Convert to string and limit to 8 digits
+      const val = value.toString().replace(/\D/g, "").slice(0, 8);
+
+      setFormData((prev) => ({
+        ...prev,
+        hsn: val,
+      }));
+
+      setErrors((prev) => ({
+        ...prev,
+        hsn: "",
+      }));
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -36,6 +59,17 @@ const AddInventory = () => {
     }));
   };
 
+  const handleSelectChange = (val: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tax: val,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      tax: "",
+    }));
+  };
   useEffect(() => {
     if (id) {
       getInventoryById();
@@ -63,28 +97,30 @@ const AddInventory = () => {
   };
 
   const validateForm = () => {
-    let newErrors = {};
+    let newErrors: FormErrors = {};
 
-    // Name
     if (!formData.name.trim()) {
-      newErrors.name = "Customer name is required";
+      newErrors.name = "Inventory is required";
     }
-    // Name
+
     if (!formData.unit.trim()) {
-      newErrors.unit = "Customer unit is required";
+      newErrors.unit = "Unit is required";
     }
-    // Name
+
     if (!formData.hsn.trim()) {
-      newErrors.hsn = "Customer hsn is required";
+      newErrors.hsn = "HSN is required";
+    } else if (!/^\d{8}$/.test(formData.hsn)) {
+      newErrors.hsn = "HSN must be exactly 8 digits";
     }
-    // Taxs
+
     if (!formData.tax.trim()) {
-      newErrors.tax = "Customer tax is required";
+      newErrors.tax = "Tax is required";
     }
-    // Name
+
     if (!formData.purchase.trim()) {
-      newErrors.purchase = "Customer purchase is required";
+      newErrors.purchase = "Purchase is required";
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -106,23 +142,23 @@ const AddInventory = () => {
         );
         navigate("/inventory");
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error.response.data.message);
     }
   };
 
   return (
     <ComponentCard title="Add Inventory">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Inventory Name */}
         <div>
-          <Label>Name</Label>
+          <Label>Inventory Name</Label>
           <Input
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Enter inventory name"
+            placeholder="Enter inventory"
           />
           {errors.name && (
             <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -137,8 +173,7 @@ const AddInventory = () => {
             name="unit"
             value={formData.unit}
             onChange={handleChange}
-            maxLength={10}
-            inputMode="numeric"
+            // inputMode="numeric"
             placeholder="Enter unit"
           />
           {errors.unit && (
@@ -150,11 +185,16 @@ const AddInventory = () => {
         <div>
           <Label>HSN</Label>
           <Input
-            type="text"
+            type="number"
             name="hsn"
             value={formData.hsn}
             onChange={handleChange}
-            placeholder="Enter Hsn"
+            onKeyDown={(e) => {
+              if (["e", "E", "+", "-", "."].includes(e.key)) {
+                e.preventDefault();
+              }
+            }}
+            placeholder="Enter 8-digit HSN"
           />
           {errors.hsn && (
             <p className="text-red-500 text-sm mt-1">{errors.hsn}</p>
@@ -164,16 +204,15 @@ const AddInventory = () => {
         {/* Tax */}
         <div>
           <Label>Tax</Label>
-          <select
-            name="tax"
+          <Select
             value={formData.tax}
-            onChange={handleChange}
-            className="w-full border rounded px-3 py-2"
-          >
-            <option value="">Tax %</option>
-            <option value="5">5%</option>
-            <option value="18">18%</option>
-          </select>
+            placeholder="Tax %"
+            options={[
+              { value: "5", label: "5%" },
+              { value: "18", label: "18%" },
+            ]}
+            onChange={handleSelectChange}
+          />
           {errors.tax && (
             <p className="text-red-500 text-sm mt-1">{errors.tax}</p>
           )}
@@ -206,7 +245,7 @@ const AddInventory = () => {
           className="px-5 py-2 primary-color text-white rounded"
           onClick={handleSubmit}
         >
-          {id ? "Update Customer" : "Save Customer"}
+          {id ? "Update Inventory" : "Save Inventory"}
         </button>
       </div>
     </ComponentCard>

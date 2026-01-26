@@ -6,6 +6,26 @@ import { toast } from "react-toastify";
 import { MoveLeft } from "lucide-react";
 import { numberToWords } from "../../utils/helper";
 
+type BankDetails = {
+  account_name: string;
+  account_number: string;
+  bank_name: string;
+  ifsc_code: string;
+  branch: string;
+};
+
+type Company = {
+  company_name: string;
+  address: string;
+  city: string;
+  state: string;
+  phone_number: string;
+  company_logo: string;
+  pincode: string;
+  gst_number: string;
+  bank_details?: BankDetails;
+};
+
 export default function EstimateView() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -44,6 +64,34 @@ export default function EstimateView() {
       },
     ],
   });
+
+  const [company, setCompany] = useState<Company | null>(null);
+ 
+  useEffect(() => {
+  const fetchCompany = async () => {
+    try {
+      const res = await api.get(endPointApi.getAllCompany);
+
+      if (res.data.success && res.data.data.length > 0) {
+        const raw = res.data.data[0];
+
+        const parsedCompany: Company = {
+          ...raw,
+          bank_details:
+            typeof raw.bank_details === "string"
+              ? JSON.parse(raw.bank_details)
+              : raw.bank_details,
+        };
+
+        setCompany(parsedCompany);
+      }
+    } catch (error) {
+      console.error("Failed to fetch company:", error);
+    }
+  };
+
+  fetchCompany();
+}, []);
 
   useEffect(() => {
     if (!id) return;
@@ -103,18 +151,18 @@ export default function EstimateView() {
           <div className="grid grid-cols-2">
             {/* Company Details */}
             <div>
-              <h1 className="text-xl font-bold mb-2">TEST ENERGY</h1>
+              <h1 className="text-xl font-bold mb-2">
+                {company?.company_name}
+              </h1>
               <p className="text-sm leading-relaxed">
-                30 Pitt Street, Sydney Harbour Marriot
+                {company?.address}
                 <br />
-                Canberra,
-                <br />
-                SURAT, Gujarat - 394210
+                {company?.city}, {company?.state} - {company?.pincode}
                 <br />
               </p>
-              <p className="text-sm mt-1">Phone: 7069929000</p>
+              <p className="text-sm mt-1">Phone: {company?.phone_number}</p>
               <p className="text-sm font-semibold mt-1">
-                GSTN: 24DAFPG4786M8Z9
+                GSTN: {company?.gst_number}
               </p>
             </div>
 
@@ -134,9 +182,10 @@ export default function EstimateView() {
               <div className="flex">
                 <span className="font-semibold w-40">Estimate Date:</span>
                 <span>
-                  {formData.date ? new Date(formData.date).toLocaleDateString() : ""}
+                  {formData.date
+                    ? new Date(formData.date).toLocaleDateString()
+                    : ""}
                 </span>
-
               </div>
               <div className="flex">
                 <span className="font-semibold w-40">Place of Supply:</span>
@@ -162,7 +211,8 @@ export default function EstimateView() {
                 <br />
                 {formData.customer?.address || ""}
                 <br />
-                {formData.customer?.city || ""}, {formData.customer?.state || ""}
+                {formData.customer?.city || ""},{" "}
+                {formData.customer?.state || ""}
                 <br />
                 +91 {formData.customer?.mobile || ""}
               </p>
@@ -202,8 +252,12 @@ export default function EstimateView() {
                 )} */}
                 {formData.state === "Gujarat" ? (
                   <>
-                    <th className="text-left p-2 text-sm font-bold">CGST (₹)</th>
-                    <th className="text-left p-2 text-sm font-bold">SGST (₹)</th>
+                    <th className="text-left p-2 text-sm font-bold">
+                      CGST (₹)
+                    </th>
+                    <th className="text-left p-2 text-sm font-bold">
+                      SGST (₹)
+                    </th>
                   </>
                 ) : (
                   <th className="text-left p-2 text-sm font-bold">IGST (₹)</th>
@@ -233,7 +287,9 @@ export default function EstimateView() {
                   ) : (
                     <td className="p-2 text-sm">{item.igst}</td>
                   )}
-                  <td className="p-2 text-sm align-top">{item.taxableAmount}.00</td>
+                  <td className="p-2 text-sm align-top">
+                    {item.taxableAmount}.00
+                  </td>
                 </tr>
               ))}
               {/* Empty rows for spacing */}
@@ -249,11 +305,11 @@ export default function EstimateView() {
           {/* Bank Details */}
           <div className="mt-16">
             <h3 className="font-bold mb-2">Bank Details</h3>
-            <p className="text-sm">Name: TEST ENERGY</p>
-            <p className="text-sm">Account No: 258741259685</p>
-            <p className="text-sm">Bank: HDFC BANK</p>
-            <p className="text-sm">ISFC: HDFC1003888</p>
-            <p className="text-sm">Branch: KAMREJ, Surat</p>
+            <p className="text-sm">Name: {company?.company_name}</p>
+            <p className="text-sm">Account No: {company?.bank_details?.account_number}</p>
+            <p className="text-sm">Bank: {company?.bank_details?.bank_name}</p>
+            <p className="text-sm">ISFC: {company?.bank_details?.ifsc_code}</p>
+            <p className="text-sm">Branch: {company?.bank_details?.branch}</p>
           </div>
 
           {/* Amount Details */}
@@ -281,7 +337,7 @@ export default function EstimateView() {
 
         {/* Signature */}
         <div className="text-right mt-12">
-          <p className="font-bold">For, TEST ENERGY</p>
+          <p className="font-bold">For, {company?.company_name}</p>
           <div className="mt-16"></div>
         </div>
       </div>

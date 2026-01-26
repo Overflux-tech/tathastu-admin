@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { toast } from "react-toastify";
 import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
@@ -66,18 +65,12 @@ const Inventory = () => {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("file", file); // backend me same key hona chahiye
+    formData.append("file", file);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3688/api/v1/inventory/upload-excel",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+       const res = await api.post(endPointApi.uploadExcelInventory, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
       console.log("resss", res);
 
       if (res.data) {

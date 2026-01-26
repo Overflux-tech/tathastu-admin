@@ -24,13 +24,17 @@ import Invoice from "./pages/Invoice/Invoice";
 import AddInvoice from "./pages/Invoice/AddInvoice";
 import EstimateView from "./pages/Estimate/EstimateView";
 import InvoiceView from "./pages/Invoice/InvoiceView";
+import AddPayment from "./pages/Payment/AddPayment";
+import AddCompany from "./pages/Company/AddCompany";
+import Payment from "./pages/Payment/Payment";
+import StatementOfAccounts from "./pages/Customer/StatementOfAccounts";
 
 export default function App() {
   return (
     <>
       <Router>
         <ScrollToTop />
-         <ToastContainer
+        <ToastContainer
           position="top-right"
           autoClose={3000}
           hideProgressBar={false}
@@ -47,6 +51,9 @@ export default function App() {
             <Route index path="/customer" element={<Customer />} />
             <Route path="/customer/add" element={<AddCustomer />} />
             <Route path="/customer/edit/:id" element={<AddCustomer />} />
+            <Route path="/customer/:id/statement" element={<StatementOfAccounts />} />
+
+            <Route index path="/company/add" element={<AddCompany />} />
 
             <Route index path="/inventory" element={<Inventory />} />
             <Route path="/inventory/add" element={<AddInventory />} />
@@ -63,6 +70,11 @@ export default function App() {
             <Route path="/invoice/edit/:id" element={<AddInvoice />} />
             <Route path="/invoice/view/:id" element={<InvoiceView />} />
 
+            {/* Payment */}
+            <Route index path="/payment" element={<Payment />} />
+            <Route path="/payment/add" element={<AddPayment />} />
+            <Route path="/payment/edit/:id" element={<AddPayment />} />
+
             {/* Others Page */}
             <Route path="/profile" element={<UserProfiles />} />
             <Route path="/blank" element={<Blank />} />
@@ -77,7 +89,6 @@ export default function App() {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/badge" element={<Badges />} />
             <Route path="/buttons" element={<Buttons />} />
-
           </Route>
 
           {/* Auth Layout */}

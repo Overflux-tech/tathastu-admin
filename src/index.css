@@ -188,6 +188,10 @@ layer(base);
   body {
     @apply relative font-normal font-outfit z-1 bg-gray-50;
   }
+
+  :root {
+    --background: 210 20% 98%;
+  }
 }
 
 @utility menu-item {

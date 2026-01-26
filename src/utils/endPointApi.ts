@@ -9,6 +9,12 @@ export interface EndPointApi {
     createCustomer?: string;
     updateCustomer?: string;
     deleteCustomer?: string;
+    customerStatement?: string;
+
+    //Company
+    createCompany: string;
+    updateCompany: string;
+    getAllCompany: string;
 
     //Inventory
     getAllInventory?: string;
@@ -34,6 +40,13 @@ export interface EndPointApi {
     deleteInvoice?: string;
     getLastInvoiceNumber?: string;
     estimateByNumber?: string
+
+    //Payment
+    getAllPayment: string;
+    deletePayment: string;
+    getByIdPayment: string;
+    createPayment: string;
+    updatePayment: string;
 }
 
 // Define and export the API endpoint object
@@ -42,12 +55,18 @@ const endPointApi: EndPointApi = {
     register: 'auth/register',
     logout: 'auth/logout',
 
-    //Blogs
+    //Customers
     getAllCustomer: 'customer/getall',
     getByIdCustomer: 'customer/getById',
     createCustomer: 'customer/create',
     updateCustomer: 'customer/update',
-    deleteCustomer: 'customer/delete', 
+    deleteCustomer: 'customer/delete',
+    customerStatement: 'customer',
+
+    //Company
+    createCompany: 'company/create',
+    updateCompany: 'company/update',
+    getAllCompany: 'company/getall',
 
     //Inventory
     getAllInventory: 'inventory/getall',
@@ -73,6 +92,13 @@ const endPointApi: EndPointApi = {
     updateInvoice: 'invoice/update',
     deleteInvoice: 'invoice/delete',
     getLastInvoiceNumber: 'invoice/last-invoice-number',
+
+    //Payment
+    getAllPayment: 'payment/getall',
+    deletePayment: 'payment/delete',
+    getByIdPayment: 'payment/getById',
+    createPayment: 'payment/create',
+    updatePayment: 'payment/update'
 };
 
 export default endPointApi;

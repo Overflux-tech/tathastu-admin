@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
+
 import React, { useEffect, useState } from "react";
 import Input from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
@@ -9,6 +11,8 @@ import endPointApi from "../../utils/endPointApi";
 import { api } from "../../utils/axiosInstance";
 import { generateInvoiceNumber } from "../../utils/helper";
 import DatePicker from "../../components/form/date-picker";
+import Select from "../../components/form/Select";
+import { Trash2 } from "lucide-react";
 
 const AddInvoice = () => {
   const navigate = useNavigate();
@@ -18,7 +22,7 @@ const AddInvoice = () => {
     customerId: "",
     invoiceNumber: "",
     orderNumber: "",
-    date: null as Date | null,
+    date: new Date(),
     state: "",
     items: [
       {
@@ -34,7 +38,6 @@ const AddInvoice = () => {
   const [errors, setErrors] = useState({});
   const [customers, setCustomers] = useState([]);
   const [inventoryData, setInventoryData] = useState([]);
-  const [estimateData, setEstimateData] = useState(null);
 
   /* -------------------- HANDLERS -------------------- */
 
@@ -52,21 +55,35 @@ const AddInvoice = () => {
     }));
   };
 
-  const handleItemChange = (index, e) => {
+  const handleItemChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    const updatedItems = [...formData.items];
 
-    updatedItems[index][name] = value;
+    setFormData((prev) => {
+      const updatedItems = [...prev.items];
 
-    setFormData((prev) => ({
-      ...prev,
-      items: updatedItems,
-    }));
+      // update current field
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [name]: value,
+      };
 
-    setErrors((prev) => ({
-      ...prev,
-      [`${name}_${index}`]: "",
-    }));
+      // when item is selected, auto-fill tax
+      if (name === "item") {
+        const selectedItem = inventoryData.find((inv) => inv.id === value);
+
+        if (selectedItem) {
+          updatedItems[index].taxRate = selectedItem.tax; // auto set tax
+        }
+      }
+
+      return {
+        ...prev,
+        items: updatedItems,
+      };
+    });
   };
 
   // Remove any other duplicate declaration
@@ -78,8 +95,8 @@ const AddInvoice = () => {
     const orderNumber = formData.orderNumber.trim();
     if (!orderNumber) return;
 
-     const res = await api.get(`${endPointApi.estimateByNumber}/${orderNumber}`);
-      const estimate = res.data.data;
+    const res = await api.get(`${endPointApi.estimateByNumber}/${orderNumber}`);
+    const estimate = res.data.data;
     if (!estimate) {
       toast.error("No estimate found");
 
@@ -90,19 +107,19 @@ const AddInvoice = () => {
       }));
       return;
     } else {
-
       setFormData((prev) => ({
         ...prev,
         customerId: estimate.customerId?.id || prev.customerId,
         state: estimate.customerId?.state || prev.state,
         date: estimate.date ? new Date(estimate.date) : prev.date,
-        items: estimate.items?.map((i) => ({
-          item: i.item?.id || "",
-          description: i.description || "",
-          qty: i.qty || 0,
-          rate: i.rate || 0,
-          taxRate: i.taxRate || 0,
-        })) || prev.items,
+        items:
+          estimate.items?.map((i) => ({
+            item: i.item?.id || "",
+            description: i.description || "",
+            qty: i.qty || 0,
+            rate: i.rate || 0,
+            taxRate: i.taxRate || 0,
+          })) || prev.items,
       }));
     }
   };
@@ -127,7 +144,7 @@ const AddInvoice = () => {
   /* -------------------- VALIDATION -------------------- */
 
   const validateForm = () => {
-    let newErrors = {};
+    const newErrors: Record<string, string> = {};
 
     if (!formData.customerId) {
       newErrors.customerId = "Customer is required";
@@ -204,11 +221,10 @@ const AddInvoice = () => {
       console.error(error);
       toast.error(error?.response?.data?.message || "Something went wrong");
     }
-
   };
 
   useEffect(() => {
-    // Example: last saved estimate number
+    // Example: last saved invoice number
     const fetchLastInvoiceNumber = async () => {
       try {
         const res = await api.get(`${endPointApi.getLastInvoiceNumber}`);
@@ -252,7 +268,7 @@ const AddInvoice = () => {
         const res = await api.get(`${endPointApi.getAllCustomer}`);
 
         setCustomers(res.data.data || []);
-      } catch (err) {
+      } catch {
         toast.error("Failed to load customers");
       }
     };
@@ -278,23 +294,23 @@ const AddInvoice = () => {
           state: data.state || "",
           items: data.items?.length
             ? data.items.map((item) => ({
-              item: item.item?.id || "",
-              name: item.item?.name || "",
-              description: item.description || "",
-              qty: item.qty || 0,
-              rate: item.rate || 0,
-              taxRate: item.taxRate || 0,
-            }))
+                item: item.item?.id || "",
+                name: item.item?.name || "",
+                description: item.description || "",
+                qty: item.qty || 0,
+                rate: item.rate || 0,
+                taxRate: item.taxRate || 0,
+              }))
             : [
-              {
-                name: "",
-                item: "",
-                description: "",
-                qty: 0,
-                rate: 0,
-                taxRate: 0,
-              },
-            ],
+                {
+                  name: "",
+                  item: "",
+                  description: "",
+                  qty: 0,
+                  rate: 0,
+                  taxRate: 0,
+                },
+              ],
         });
       } catch (error) {
         toast.error("Failed to load invoice ❌");
@@ -305,35 +321,90 @@ const AddInvoice = () => {
     fetchInvoice();
   }, [id]);
 
+  const subtotal = formData.items.reduce((sum, item) => {
+    const rowTotal = Number(item.qty || 0) * Number(item.rate || 0);
+    return sum + rowTotal;
+  }, 0);
+
+  // Initialize tax summary
+  const taxSummary = {
+    sgst2_5: 0,
+    cgst2_5: 0,
+    sgst9: 0,
+    cgst9: 0,
+    igst2_5: 0,
+    igst9: 0,
+  };
+
+  formData.items.forEach((item) => {
+    const rowTotal = Number(item.qty || 0) * Number(item.rate || 0);
+    const tax = Number(item.taxRate || 0);
+
+    if (formData.state === "Gujarat") {
+      // SGST + CGST for Gujarat
+      if (tax === 5) {
+        taxSummary.sgst2_5 += rowTotal * 0.025;
+        taxSummary.cgst2_5 += rowTotal * 0.025;
+      }
+      if (tax === 18) {
+        taxSummary.sgst9 += rowTotal * 0.09;
+        taxSummary.cgst9 += rowTotal * 0.09;
+      }
+    } else {
+      // IGST for outside Gujarat
+      if (tax === 5) taxSummary.igst2_5 += rowTotal * 0.05;
+      if (tax === 18) taxSummary.igst9 += rowTotal * 0.18;
+    }
+  });
+
+  // Grand total
+  const grandTotal =
+    subtotal +
+    taxSummary.sgst2_5 +
+    taxSummary.cgst2_5 +
+    taxSummary.sgst9 +
+    taxSummary.cgst9 +
+    taxSummary.igst2_5 +
+    taxSummary.igst9;
+
+  const customerOptions = customers.map((cust) => ({
+    value: cust.id,
+    label: cust.name,
+  }));
+
+  const inventoryOptions = inventoryData.map((p) => ({
+    value: p.id,
+    label: p.name,
+  }));
+
   return (
     <ComponentCard title="Add Invoice">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
         <div>
-          <Label>Customer Name</Label>
-          <select
-            className="w-full border rounded px-3 py-2"
+          <div className="flex items-center justify-between">
+            <Label>Customer Name</Label>
+          </div>
+          <Select
+            options={customerOptions}
             value={formData.customerId}
-            onChange={(e) => {
-              const selectedCustomer = customers.find(
-                (c) => c.id === e.target.value
-              );
+            placeholder="Select Customer"
+            showAddButton={true}
+            onAddNew={() => navigate("/customer/add")}
+            addButtonText="Add New Customer"
+            onChange={(value) => {
+              const selectedCustomer = customers.find((c) => c.id === value);
 
               setFormData((prev) => ({
                 ...prev,
-                customerId: e.target.value, // ✅ store ID
+                customerId: value, // store ID
                 state: selectedCustomer?.state || "",
               }));
             }}
-          >
-            <option value="">Select Customer</option>
-            {customers.map((cust) => (
-              <option key={cust.id} value={cust.id}>
-                {cust.name}
-              </option>
-            ))}
-          </select>
-          {errors.customerId && <p className="text-red-500">{errors.customerId}</p>}
+          />
+
+          {errors.customerId && (
+            <p className="text-red-500">{errors.customerId}</p>
+          )}
         </div>
 
         <div>
@@ -343,8 +414,11 @@ const AddInvoice = () => {
             value={formData.invoiceNumber}
             onChange={handleChange}
             placeholder="INV-001"
+            disabled
           />
-          {errors.invoiceNumber && <p className="text-red-500">{errors.invoiceNumber}</p>}
+          {errors.invoiceNumber && (
+            <p className="text-red-500">{errors.invoiceNumber}</p>
+          )}
         </div>
 
         <div>
@@ -354,7 +428,7 @@ const AddInvoice = () => {
             value={formData.orderNumber}
             onChange={handleChange}
             onKeyDown={handleOrderNumberEnter}
-            placeholder="Optional"
+            placeholder="Order No."
           />
         </div>
 
@@ -389,30 +463,30 @@ const AddInvoice = () => {
       {/* ITEMS */}
       <div className="mt-6">
         {formData.items.map((item, index) => (
-          <div key={index} className="grid grid-cols-6 gap-3 mb-3">
-
-            <div>
-              <select
-                name="item"
-                value={item.item}
-                onChange={(e) => handleItemChange(index, e)}
-                className="w-full border rounded px-3 py-2"
-              >
-                <option value="">Select Item</option>
-                {inventoryData.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-
-              {errors[`item_${index}`] && (
-                <p className="text-red-500 text-xs">
-                  {errors[`item_${index}`]}
-                </p>
-              )}
+          <div
+            key={index}
+            className="grid grid-cols-[2fr_2fr_1fr_1fr_1fr_1fr_auto] gap-3 mb-3 items-center"
+          >
+            {/* Item */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <Select
+                  options={inventoryOptions}
+                  value={item.item}
+                  placeholder="Select Item"
+                  showAddButton={true}
+            onAddNew={() => navigate("/inventory/add")}
+            addButtonText="Add New Inventory"
+                  onChange={(value) =>
+                    handleItemChange(index, {
+                      target: { name: "item", value },
+                    } as any)
+                  }
+                />
+              </div>
             </div>
 
+            {/* Description */}
             <div>
               <Input
                 name="description"
@@ -422,6 +496,7 @@ const AddInvoice = () => {
               />
             </div>
 
+            {/* Qty */}
             <div>
               <Input
                 type="number"
@@ -430,11 +505,9 @@ const AddInvoice = () => {
                 value={item.qty}
                 onChange={(e) => handleItemChange(index, e)}
               />
-              {errors[`qty_${index}`] && (
-                <p className="text-red-500 text-xs">{errors[`qty_${index}`]}</p>
-              )}
             </div>
 
+            {/* Rate */}
             <div>
               <Input
                 type="number"
@@ -443,39 +516,121 @@ const AddInvoice = () => {
                 value={item.rate}
                 onChange={(e) => handleItemChange(index, e)}
               />
-              {errors[`rate_${index}`] && (
-                <p className="text-red-500 text-xs">{errors[`rate_${index}`]}</p>
-              )}
             </div>
 
+            {/* Tax */}
             <div>
-              <select
-                name="taxRate"
+              <Select
                 value={item.taxRate}
-                onChange={(e) => handleItemChange(index, e)}
-                className="w-full border rounded px-3 py-2"
-              >
-                <option value="">Tax %</option>
-                <option value="5">5%</option>
-                <option value="18">18%</option>
-              </select>
+                placeholder="Tax %"
+                options={[
+                  { value: "5", label: "5%" },
+                  { value: "18", label: "18%" },
+                ]}
+                onChange={(value) =>
+                  handleItemChange(index, {
+                    target: { name: "taxRate", value },
+                  } as any)
+                }
+              />
             </div>
 
-            <div className="flex items-center justify-center">
+            {/* Total */}
+            <div>
+              <Input
+                name="total"
+                placeholder="Total"
+                value={
+                  item.qty && item.rate
+                    ? Number(item.qty) * Number(item.rate)
+                    : ""
+                }
+                readOnly
+              />
+            </div>
+
+            {/* Delete */}
+            <div className="flex justify-center">
               <button
                 type="button"
                 onClick={() => removeItem(index)}
-                className="flex items-center justify-center w-8 h-8 text-red-500 font-bold rounded-full hover:bg-red-100"
+                className="text-red-500"
               >
-                ✕
+                <Trash2 className="h-4 w-4" />
               </button>
             </div>
           </div>
         ))}
 
-        <button onClick={addItem} className="primary-color-text mt-2">
-          + Add Item
-        </button>
+        <div className="grid grid-cols-2 gap-4 max-w-full">
+          {/* Left Side: Add Item Button */}
+          <div className="flex items-start">
+            <button onClick={addItem} className="primary-color-text">
+              + Add Item
+            </button>
+          </div>
+
+          {/* Right Side: Subtotal & Tax Grid */}
+          <div className="border-t pt-4 grid grid-cols-2 gap-y-2 text-sm justify-items-end">
+            <span className="justify-self-start">Subtotal</span>
+            <span>{subtotal.toFixed(2)}</span>
+
+            {/* For Gujarat */}
+            {formData.state === "Gujarat" && (
+              <>
+                {taxSummary.sgst9 > 0 && (
+                  <>
+                    <span className="justify-self-start">SGST @ 9%</span>
+                    <span>{taxSummary.sgst9.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.cgst9 > 0 && (
+                  <>
+                    <span className="justify-self-start">CGST @ 9%</span>
+                    <span>{taxSummary.cgst9.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.sgst2_5 > 0 && (
+                  <>
+                    <span className="justify-self-start">SGST @ 2.5%</span>
+                    <span>{taxSummary.sgst2_5.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.cgst2_5 > 0 && (
+                  <>
+                    <span className="justify-self-start">CGST @ 2.5%</span>
+                    <span>{taxSummary.cgst2_5.toFixed(2)}</span>
+                  </>
+                )}
+              </>
+            )}
+
+            {/* For Outside Gujarat */}
+            {formData.state !== "Gujarat" && (
+              <>
+                {taxSummary.igst9 > 0 && (
+                  <>
+                    <span className="justify-self-start">IGST @ 18%</span>
+                    <span>{taxSummary.igst9.toFixed(2)}</span>
+                  </>
+                )}
+                {taxSummary.igst2_5 > 0 && (
+                  <>
+                    <span className="justify-self-start">IGST @ 5%</span>
+                    <span>{taxSummary.igst2_5.toFixed(2)}</span>
+                  </>
+                )}
+              </>
+            )}
+
+            <span className="font-bold justify-self-start border-t pt-2">
+              TOTAL
+            </span>
+            <span className="font-bold text-lg border-t pt-2">
+              {grandTotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* ACTIONS */}

@@ -1,6 +1,4 @@
-// @ts-nocheck
-
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/axiosInstance";
 import endPointApi from "../../utils/endPointApi";
@@ -8,48 +6,48 @@ import { toast } from "react-toastify";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import { Edit, Trash2 } from "lucide-react";
 
-const Customer = () => {
+const Payment = () => {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState([]);
+  const [payment, setPayment] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  // 🔹 Get all customers
-  const getCustomers = async () => {
+  // 🔹 Get all payment
+  const getPayment = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`${endPointApi.getAllCustomer}`);
+      const res = await api.get(`${endPointApi.getAllPayment}`);
 
       if (res.data?.success) {
-        setCustomers(res.data.data || []);
+        setPayment(res.data.data || []);
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to fetch customers ❌");
+      // alert("Failed to fetch payment ❌");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    getCustomers();
+    getPayment();
   }, []);
 
-  // 🔹 Delete customer
+  // 🔹 Delete payment
   const handleDelete = async (id: number | null) => {
     if (!id) return;
 
     try {
-      const res = await api.delete(`${endPointApi.deleteCustomer}/${id}`);
+      const res = await api.delete(`${endPointApi.deletePayment}/${id}`);
 
       if (res.data) {
         toast.success(res.data.message);
-        getCustomers(); // refresh list
+        getPayment(); // refresh list
         setShowDeleteModal(false);
         setDeleteId(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast.error(error);
     }
   };
@@ -58,12 +56,12 @@ const Customer = () => {
     <div className="p-4">
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Customer List</h2>
+        <h2 className="text-xl font-semibold">Payment List</h2>
         <button
-          onClick={() => navigate("/customer/add")}
+          onClick={() => navigate("/payment/add")}
           className="primary-color text-white px-4 py-2 rounded hover:primary-color"
         >
-          + Add Customer
+          + Add Payment
         </button>
       </div>
 
@@ -73,10 +71,10 @@ const Customer = () => {
           <thead className="bg-gray-100">
             <tr>
               <th className="border p-2">Sr.</th>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Email</th>
-              <th className="border p-2">Mobile</th>
-              <th className="border p-2">City</th>
+              <th className="border p-2">Customer Name</th>
+              <th className="border p-2">Date</th>
+              <th className="border p-2">Payment Mode</th>
+              <th className="border p-2">Amount</th>
               <th className="border p-2">Action</th>
             </tr>
           </thead>
@@ -84,38 +82,30 @@ const Customer = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center p-4">
+                <td colSpan={6} className="text-center p-4">
                   Loading...
                 </td>
               </tr>
-            ) : customers.length === 0 ? (
+            ) : payment.length === 0 ? (
               <tr>
-                <td colSpan="6" className="text-center p-4">
-                  No customers found
+                <td colSpan={6} className="text-center p-4">
+                  No payments found
                 </td>
               </tr>
             ) : (
-              customers.map((item, index) => (
+              payment.map((item: any, index) => (
                 <tr key={item.id}>
                   <td className="border p-2 text-center">{index + 1}</td>
-                  <td
-                    className="border p-2 text-blue-600 cursor-pointer hover:underline"
-                    onClick={() =>
-                      navigate(`/customer/${item.id}/statement`)
-                    }
-                  >
-                    {item.name}
-                  </td>
-
-                  <td className="border p-2">{item.email || "-"}</td>
-                  <td className="border p-2">{item.mobile}</td>
-                  <td className="border p-2">{item.city}</td>
+                  <td className="border p-2">{item.customerId?.name}</td>
+                  <td className="border p-2">{new Date(item.date).toLocaleDateString("en-GB")}</td>
+                  <td className="border p-2">{item.paymentMode}</td>
+                  <td className="border p-2">{item.amount}</td>
 
                   {/* Actions */}
                   <td className="border p-2 text-center space-x-2">
                     {/* Edit */}
                     <button
-                      onClick={() => navigate(`/customer/edit/${item.id}`)}
+                      onClick={() => navigate(`/payment/edit/${item.id}`)}
                       className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
                       title="Edit"
                     >
@@ -149,4 +139,4 @@ const Customer = () => {
   );
 };
 
-export default Customer;
+export default Payment;

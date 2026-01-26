@@ -1,8 +1,80 @@
-import { useState } from "react";
+// import { useEffect, useState } from "react";
+
+// interface Option {
+//   value: string;
+//   label: string;
+// }
+
+// interface SelectProps {
+//   options: Option[];
+//   placeholder?: string;
+//   onChange: (value: string) => void;
+//   className?: string;
+//   defaultValue?: string;
+//   value?: string;
+// }
+
+// const Select: React.FC<SelectProps> = ({
+//   options,
+//   placeholder = "Select an option",
+//   onChange,
+//   className = "",
+//   defaultValue = "",
+//   value = "" 
+// }) => {
+//   // Manage the selected value
+//   const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
+
+//   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+//     const val = e.target.value;
+//     setSelectedValue(val);
+//     onChange(val); // Trigger parent handler
+//   };
+
+//    useEffect(() => {
+//     setSelectedValue(value);
+//    }, [value]);
+  
+//   return (
+//     <select
+//       className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
+//         selectedValue
+//           ? "text-gray-800 dark:text-white/90"
+//           : "text-gray-400 dark:text-gray-400"
+//       } ${className}`}
+//       value={selectedValue}
+//       onChange={handleChange}
+//     >
+//       {/* Placeholder option */}
+//       <option
+//         value=""
+//         disabled
+//         className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+//       >
+//         {placeholder}
+//       </option>
+//       {/* Map over options */}
+//       {options.map((option) => (
+//         <option
+//           key={option.value}
+//           value={option.value}
+//           className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
+//         >
+//           {option.label}
+//         </option>
+//       ))}
+//     </select>
+//   );
+// };
+
+// export default Select;
+import React, { useEffect, useState, useRef } from "react";
+import { Plus, ChevronDown } from 'lucide-react';
 
 interface Option {
   value: string;
   label: string;
+  email?: string; // Optional for customer display
 }
 
 interface SelectProps {
@@ -11,6 +83,10 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   defaultValue?: string;
+  value?: string;
+  showAddButton?: boolean; // New prop
+  onAddNew?: () => void; // New prop for add button click
+  addButtonText?: string; // New prop
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -19,16 +95,132 @@ const Select: React.FC<SelectProps> = ({
   onChange,
   className = "",
   defaultValue = "",
+  value = "",
+  showAddButton = false,
+  onAddNew,
+  addButtonText = "Add New"
 }) => {
-  // Manage the selected value
   const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
+  useEffect(() => {
     setSelectedValue(value);
-    onChange(value); // Trigger parent handler
+  }, [value]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSelect = (val: string) => {
+    setSelectedValue(val);
+    onChange(val);
+    setIsOpen(false);
   };
 
+  const selectedOption = options?.find(opt => opt.value === selectedValue) || null;
+
+  // If showAddButton is true, use custom dropdown
+  if (showAddButton) {
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 text-left flex items-center justify-between ${
+            selectedValue
+              ? "text-gray-800 dark:text-white/90"
+              : "text-gray-400 dark:text-gray-400"
+          } ${className}`}
+        >
+          <span className="truncate">
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          <ChevronDown 
+            className={`h-4 w-4 text-gray-500 transition-transform flex-shrink-0 ${
+              isOpen ? 'rotate-180' : ''
+            }`} 
+          />
+        </button>
+
+        {isOpen && (
+          <div className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-80 overflow-hidden">
+            {/* Add New Button */}
+            {onAddNew && (
+              <button
+                type="button"
+                onClick={() => {
+                  onAddNew();
+                  setIsOpen(false);
+                }}
+                className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-gray-800 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 text-blue-600 dark:text-blue-400 font-medium transition"
+              >
+                <div className="h-7 w-7 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
+                  <Plus className="h-3 w-3" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">{addButtonText}</div>
+                  <div className="text-xs text-blue-500 dark:text-blue-400">Create a new record</div>
+                </div>
+              </button>
+            )}
+
+            {/* Options List */}
+            <div className="max-h-64 overflow-y-auto">
+              {options.length > 0 ? (
+                options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleSelect(option.value)}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition ${
+                      selectedValue === option.value 
+                        ? 'bg-blue-50 dark:bg-gray-800' 
+                        : ''
+                    }`}
+                  >
+                    <div className="h-6 w-6 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 text-white flex items-center justify-center flex-shrink-0 font-semibold text-sm">
+                      {option.label.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white/90 truncate">
+                        {option.label}
+                      </div>
+                      {option.email && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {option.email}
+                        </div>
+                      )}
+                    </div>
+                    {selectedValue === option.value && (
+                      <div className="h-5 w-5 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0">
+                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400 text-sm">
+                  No options available
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default select (without custom dropdown)
   return (
     <select
       className={`h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
@@ -37,9 +229,12 @@ const Select: React.FC<SelectProps> = ({
           : "text-gray-400 dark:text-gray-400"
       } ${className}`}
       value={selectedValue}
-      onChange={handleChange}
+      onChange={(e) => {
+        const val = e.target.value;
+        setSelectedValue(val);
+        onChange(val);
+      }}
     >
-      {/* Placeholder option */}
       <option
         value=""
         disabled
@@ -47,7 +242,6 @@ const Select: React.FC<SelectProps> = ({
       >
         {placeholder}
       </option>
-      {/* Map over options */}
       {options.map((option) => (
         <option
           key={option.value}
